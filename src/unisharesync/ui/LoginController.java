@@ -15,6 +15,10 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class LoginController implements Initializable {
 
@@ -31,7 +35,6 @@ public class LoginController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // No initialization needed for now
     }    
 
     @FXML
@@ -48,13 +51,30 @@ public class LoginController implements Initializable {
             showAlert(Alert.AlertType.ERROR, "Invalid email format!");
             return;
         }
-        if (password.length() < 6) {
-            showAlert(Alert.AlertType.ERROR, "Password must be at least 6 characters!");
-            return;
-        }
 
-        showAlert(Alert.AlertType.INFORMATION, "Login successful! (MySQL integration pending)");
-        clearFields();
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            conn = DBUtil.getConnection();
+            String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, email);
+            stmt.setString(2, password); // Note: In production, hash passwords
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                showAlert(Alert.AlertType.INFORMATION, "Login successful!");
+                clearFields();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Invalid email or password!");
+            }
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Database error: " + e.getMessage());
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException e) {}
+            if (rs != null) try { rs.close(); } catch (SQLException e) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+        }
     }
 
     @FXML
@@ -91,7 +111,7 @@ public class LoginController implements Initializable {
         alert.setTitle("UniShareSync");
         alert.setHeaderText(null);
         alert.getDialogPane().getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-        alert.getDialogPane().getStyleClass().add("glass-container");
+        alert.getDialogPane().getStyleClass().add("glass-container"); // Changed to glass-container
         alert.showAndWait();
     }
 }

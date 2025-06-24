@@ -16,6 +16,10 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.fxml.Initializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class SignupController implements Initializable {
 
@@ -61,8 +65,31 @@ public class SignupController implements Initializable {
             return;
         }
 
-        showAlert(Alert.AlertType.INFORMATION, "Signup successful! (MySQL integration pending)");
-        clearFields();
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        try {
+            conn = DBUtil.getConnection();
+            String sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, name);
+            stmt.setString(2, email);
+            stmt.setString(3, password); // Note: In production, hash passwords
+            stmt.setString(4, role);
+            int rows = stmt.executeUpdate();
+            if (rows > 0) {
+                showAlert(Alert.AlertType.INFORMATION, "Signup successful!");
+                clearFields();
+            }
+        } catch (SQLException e) {
+            if (e.getMessage().contains("Duplicate entry")) {
+                showAlert(Alert.AlertType.ERROR, "Email already registered!");
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Database error: " + e.getMessage());
+            }
+        } finally {
+            if (conn != null) try { conn.close(); } catch (SQLException e) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+        }
     }
 
     @FXML
@@ -101,7 +128,7 @@ public class SignupController implements Initializable {
         alert.setTitle("UniShareSync");
         alert.setHeaderText(null);
         alert.getDialogPane().getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-        alert.getDialogPane().getStyleClass().add("glass-container");
+        alert.getDialogPane().getStyleClass().add("glass-container"); // Changed to glass-container
         alert.showAndWait();
     }
 }
