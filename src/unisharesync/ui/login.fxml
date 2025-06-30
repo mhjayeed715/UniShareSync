@@ -37,7 +37,7 @@
                            </font>
                         </Label>
                         <Label styleClass="subtitle" text="Please sign in to your account" textFill="#898080" />
-                        <TextField fx:id="emailField" maxWidth="250.0" promptText="Email" styleClass="form-input" />
+                        <TextField fx:id="loginField" maxWidth="250.0" promptText="Username or Email" styleClass="form-input" />
                         <PasswordField fx:id="passwordField" maxWidth="250.0" promptText="Password" styleClass="form-input" />
                         <Button fx:id="loginButton" mnemonicParsing="false" onAction="#handleLogin" style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 10, 0, 0, 0);;" styleClass="signup-button" text="Login" />
                         <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="5.0">

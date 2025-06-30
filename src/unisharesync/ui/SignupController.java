@@ -40,11 +40,11 @@ public class SignupController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        roleComboBox.getItems().addAll("Student", "Faculty", "Admin");
+        roleComboBox.getItems().addAll("Student", "Faculty");
         roleComboBox.setPromptText("Select Role");
     }    
 
-    @FXML
+        @FXML
     private void handleSignup() {
         System.out.println("Signup button clicked");
         String name = nameField.getText().trim();
@@ -69,11 +69,11 @@ public class SignupController implements Initializable {
         PreparedStatement stmt = null;
         try {
             conn = DBUtil.getConnection();
-            String sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO users (name, email, password, role, is_admin) VALUES (?, ?, ?, ?, 0)";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, name);
             stmt.setString(2, email);
-            stmt.setString(3, password); // Note: In production, hash passwords
+            stmt.setString(3, DBUtil.hashPassword(password)); 
             stmt.setString(4, role);
             int rows = stmt.executeUpdate();
             if (rows > 0) {
@@ -128,7 +128,7 @@ public class SignupController implements Initializable {
         alert.setTitle("UniShareSync");
         alert.setHeaderText(null);
         alert.getDialogPane().getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-        alert.getDialogPane().getStyleClass().add("glass-container"); // Changed to glass-container
+        alert.getDialogPane().getStyleClass().add("glass-background"); 
         alert.showAndWait();
     }
 }
