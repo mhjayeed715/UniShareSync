@@ -75,6 +75,8 @@ public class LoginController implements Initializable {
                             FXMLLoader loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/dashboard.fxml"));
                             Scene scene = new Scene(loader.load(), 1000, 600);
                             scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
+                            DashboardController controller = loader.getController();
+                            controller.setCurrentEmail(loginInput); 
                             stage.setScene(scene);
                             stage.getScene().getRoot().setOpacity(1);
                         }catch (Exception e) {
