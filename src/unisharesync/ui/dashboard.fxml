@@ -49,40 +49,88 @@
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
                <children>
-                  <Label styleClass="welcome-text" text="Welcome to UniShareSync! Your centralized academic hub." />
+                  <HBox prefHeight="100.0" prefWidth="200.0" spacing="20.0" styleClass="welcome-panel">
+                     <children>
+                        <VBox prefHeight="87.0" prefWidth="647.0">
+                           <children>
+                              <Label fx:id="welcomeLabel" prefHeight="18.0" prefWidth="222.0" styleClass="welcome-text" text="👋 Welcome, [Loading Name]!" />
+                              <Label prefHeight="18.0" prefWidth="650.0" styleClass="welcome-stats" text="[Loading Stats]" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
                   <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
                      <children>
                         <VBox layoutX="500.0" layoutY="10.0" prefHeight="200.0" prefWidth="280.0" styleClass="card">
                            <children>
-                              <Label styleClass="card-title" text="Announcements" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ImageView fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../css/announcements.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <Label styleClass="card-title" text="Announcements" />
+                                 </children>
+                              </HBox>
                               <Label styleClass="card-text" text="Stay updated with university announcements.">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
                               </Label>
                               <Button mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="card-button" text="View More" />
+                              <Button fx:id="addAnnouncementButton" layoutX="10.0" layoutY="44.0" mnemonicParsing="false" onAction="#addAnnouncement" styleClass="quick-action-button" text="➕ Add Announcement" />
                            </children>
                         </VBox>
                         <VBox prefHeight="200.0" prefWidth="280.0" styleClass="card">
                            <children>
-                              <Label styleClass="card-title" text="Resources" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ImageView fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../css/resources.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <Label styleClass="card-title" text="Resources" />
+                                 </children>
+                              </HBox>
                               <Label styleClass="card-text" text="Manage and share academic resources like notes and books.">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
                               </Label>
                               <Button mnemonicParsing="false" onAction="#goToResources" styleClass="card-button" text="View More" />
+                              <Button fx:id="uploadResourceButton" layoutX="10.0" layoutY="44.0" mnemonicParsing="false" onAction="#uploadResource" styleClass="quick-action-button" text="📤 Upload Note" />
                            </children>
                         </VBox>
                         <VBox layoutX="365.0" layoutY="10.0" prefHeight="200.0" prefWidth="280.0" styleClass="card">
                            <children>
-                              <Label styleClass="card-title" text="Projects" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
+                                 <children>
+                                    <ImageView fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+                                       <image>
+                                          <Image url="@../css/projects.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <Label styleClass="card-title" text="Projects" />
+                                 </children>
+                              </HBox>
                               <Label styleClass="card-text" text="Collaborate on group projects with task management.">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
                               </Label>
-                              <Button mnemonicParsing="false" onAction="#goToProjects" styleClass="card-button" text="View More" />
+                              <Button fx:id="viewTasksButton" mnemonicParsing="false" onAction="#goToProjects" styleClass="card-button" text="View More" />
+                              <Button layoutX="10.0" layoutY="44.0" mnemonicParsing="false" onAction="#viewTasks" styleClass="quick-action-button" text="✅ View Tasks" />
                            </children>
                         </VBox>
                      </children>
@@ -91,8 +139,8 @@
                      <children>
                         <VBox layoutX="500.0" layoutY="10.0" prefHeight="100.0" prefWidth="200.0" styleClass="card">
                            <children>
-                              <Label styleClass="card-title" text="Announcements" />
-                              <Label styleClass="card-text" text="0 New">
+                              <Label styleClass="card-title" text="📢 Announcements" />
+                              <Label styleClass="card-text" text="5 New">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
@@ -101,8 +149,8 @@
                         </VBox>
                         <VBox prefHeight="100.0" prefWidth="200.0" styleClass="card">
                            <children>
-                              <Label styleClass="card-title" text="Resources" />
-                              <Label styleClass="card-text" text="0 Available">
+                              <Label styleClass="card-title" text="📘 Resources" />
+                              <Label styleClass="card-text" text="12 Available">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
@@ -111,8 +159,8 @@
                         </VBox>
                         <VBox layoutX="365.0" layoutY="10.0" prefHeight="100.0" prefWidth="200.0" styleClass="card">
                            <children>
-                              <Label styleClass="card-title" text="Projects" />
-                              <Label styleClass="card-text" text="0 Active">
+                              <Label styleClass="card-title" text="🛠 Projects" />
+                              <Label styleClass="card-text" text="3 Active">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
@@ -121,6 +169,29 @@
                         </VBox>
                      </children>
                   </HBox>
+                  <VBox fx:id="activityFeedVBox" prefHeight="110.0" prefWidth="960.0" styleClass="activity-feed">
+                     <children>
+                        <Label styleClass="feed-title" text="Latest Activity">
+                           <VBox.margin>
+                              <Insets left="10.0" top="8.0" />
+                           </VBox.margin></Label>
+                        <Label fx:id="announcementsStatLabel" layoutX="10.0" layoutY="10.0" styleClass="feed-item" text="📢 New Announcement">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin></Label>
+                        <Label fx:id="resourcesStatLabel" layoutX="10.0" layoutY="28.0" styleClass="feed-item" text="📁 New Resource">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin></Label>
+                        <Label fx:id="projectsStatLabel" layoutX="10.0" layoutY="45.0" styleClass="feed-item" text="👥 Project Update">
+                           <VBox.margin>
+                              <Insets left="5.0" />
+                           </VBox.margin></Label>
+                     </children>
+                     <VBox.margin>
+                        <Insets bottom="10.0" />
+                     </VBox.margin>
+                  </VBox>
                </children>
             </VBox>
          </children>

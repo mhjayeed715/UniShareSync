@@ -62,36 +62,48 @@ public class LoginController implements Initializable {
             stmt.setString(1, loginInput); 
             stmt.setString(2, loginInput); 
             rs = stmt.executeQuery();
-            if(rs.next()){
+            if (rs.next()) {
                 String hashedPassword = rs.getString("password");
                 boolean isAdmin = rs.getBoolean("is_admin");
-                if(DBUtil.checkPassword(password, hashedPassword)) {
+                if (DBUtil.checkPassword(password, hashedPassword)) {
                     showAlert(Alert.AlertType.INFORMATION, "Login successful! " + (isAdmin ? "Admin access granted." : ""));
                     clearFields();
                     Stage stage = (Stage) loginField.getScene().getWindow();
                     stage.getScene().getRoot().setOpacity(0);
                     Platform.runLater(() -> {
-                        try{
-                            FXMLLoader loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/dashboard.fxml"));
-                            Scene scene = new Scene(loader.load(), 1000, 600);
-                            scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-                            DashboardController controller = loader.getController();
-                            controller.setCurrentEmail(loginInput); 
-                            stage.setScene(scene);
+                        try {
+                            FXMLLoader loader;
+                            if (isAdmin) {
+                                loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/admin_dashboard.fxml"));
+                                AnchorPane root = loader.load();
+                                AdminDashboardController controller = loader.getController();
+                                controller.setCurrentEmail(loginInput);
+                                Scene scene = new Scene(root, 1000, 600);
+                                scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
+                                stage.setScene(scene);
+                            } else {
+                                loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/dashboard.fxml"));
+                                AnchorPane root = loader.load();
+                                DashboardController controller = loader.getController();
+                                controller.setCurrentEmail(loginInput);
+                                Scene scene = new Scene(root, 1000, 600);
+                                scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
+                                stage.setScene(scene);
+                            }
                             stage.getScene().getRoot().setOpacity(1);
-                        }catch (Exception e) {
+                        } catch (Exception e) {
                             showAlert(Alert.AlertType.ERROR, "Navigation failed: " + e.getMessage());
                         }
                     });
-                }else{
+                } else {
                     showAlert(Alert.AlertType.ERROR, "Invalid username/email or password!");
                 }
-            }else{
+            } else {
                 showAlert(Alert.AlertType.ERROR, "Invalid username/email or password!");
             }
-        }catch(SQLException e){
+        } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database error: " + e.getMessage());
-        }finally{
+        } finally {
             if (conn != null) try { conn.close(); } catch (SQLException e) {}
             if (rs != null) try { rs.close(); } catch (SQLException e) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
