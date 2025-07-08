@@ -86,7 +86,7 @@ Include screenshots to showcase the progress. Below are suggested sections with 
 
 \### Signup Page
 
-!\[Signup Page](src/unisharesync/screenshots/signup\_page.png)
+!\[Signup Page](src/unisharesync/screenshots/signup_page.png)
 
 \- Shows the signup form with email, name, password, and role dropdown.
 
@@ -94,7 +94,7 @@ Include screenshots to showcase the progress. Below are suggested sections with 
 
 \### Login Page
 
-!\[Login Page](screenshots/login\_page.png)
+!\[Login Page](screenshots/login_page.png)
 
 \- Displays the login form with email and password fields.
 
@@ -103,6 +103,7 @@ Include screenshots to showcase the progress. Below are suggested sections with 
 \### Dashboard
 
 !\[Dashboard](screenshots/dashboard.png)
+!\[Dashboard](screenshots/dashboardwithnavbar.png)
 
 \- Highlights the dashboard interface with the navbar and role-based content.
 
@@ -110,7 +111,7 @@ Include screenshots to showcase the progress. Below are suggested sections with 
 
 \### Admin Dashboard
 
-!\[Admin Dashboard](src/unisharesync/screenshots/admin\_dashboard.png))
+!\[Admin Dashboard](src/unisharesync/screenshots/admin_dashboard.png))
 
 \- Shows the admin management interface.
 
@@ -118,7 +119,7 @@ Include screenshots to showcase the progress. Below are suggested sections with 
 
 \### Admin Navbar
 
-!\[Admin Navbar](screenshots/admin\_navbar.png)
+!\[Admin Navbar](screenshots/admin_navbar.png)
 
 \- Shows the navbar with the additional "Admin Dashboard" button.
 
