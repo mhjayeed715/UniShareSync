@@ -14,6 +14,7 @@ import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -165,7 +166,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void toggleMenu(javafx.event.ActionEvent event) {
+    private void toggleMenu(ActionEvent event) {
         System.out.println("Toggle menu clicked");
         VBox sidebar = (VBox) menuButton.getScene().getRoot().lookup(".sidebar");
         if (sidebar != null) {
@@ -183,18 +184,18 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void goToAnnouncements(javafx.event.ActionEvent event) { navigateTo("/unisharesync/ui/announcement.fxml"); }
+    private void goToAnnouncements(ActionEvent event) { navigateTo("/unisharesync/ui/announcement.fxml"); }
     @FXML
-    private void goToResources(javafx.event.ActionEvent event) { navigateTo("/unisharesync/ui/resource.fxml"); }
+    private void goToResources(ActionEvent event) { navigateTo("/unisharesync/ui/resource.fxml"); }
     @FXML
-    private void goToProjects(javafx.event.ActionEvent event) { navigateTo("/unisharesync/ui/project.fxml"); }
+    private void goToProjects(ActionEvent event) { navigateTo("/unisharesync/ui/project.fxml"); }
     @FXML
-    private void goToProfile(javafx.event.ActionEvent event) { navigateTo("/unisharesync/ui/profile.fxml"); }
+    private void goToProfile(ActionEvent event) { navigateTo("/unisharesync/ui/profile.fxml"); }
     @FXML
-    private void goToAdminDashboard(javafx.event.ActionEvent event) { navigateTo("/unisharesync/ui/admin_dashboard.fxml"); }
+    private void goToAdminDashboard(ActionEvent event) { navigateTo("/unisharesync/ui/admin_dashboard.fxml"); }
 
     @FXML
-    private void handleLogout(javafx.event.ActionEvent event) {
+    private void handleLogout(ActionEvent event) {
         Stage stage = (Stage) logoutButton.getScene().getWindow();
         stage.getScene().getRoot().setOpacity(0);
         Platform.runLater(() -> {
@@ -257,7 +258,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void searchUsers(javafx.event.ActionEvent event) {
+    private void searchUsers(ActionEvent event) {
         String searchTerm = searchUserField.getText();
         ObservableList<User> users = FXCollections.observableArrayList();
         try (Connection conn = DBUtil.getConnection()) {
@@ -276,7 +277,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void addUser(javafx.event.ActionEvent event) {
+    private void addUser(ActionEvent event) {
         String email = addUserEmailField.getText();
         String name = addUserNameField.getText();
         String password = addUserPasswordField.getText();
@@ -296,14 +297,14 @@ public class AdminDashboardController implements Initializable {
             stmt.executeUpdate();
             showAlert(Alert.AlertType.INFORMATION, "User added successfully!");
             clearUserFields();
-            searchUsers(event); // Refresh table
+            searchUsers(event); 
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Add failed: " + e.getMessage());
         }
     }
     
     @FXML
-    private void updateUser(javafx.event.ActionEvent event) {
+    private void updateUser(ActionEvent event) {
         String email = updateUserEmailField.getText();
         String name = updateUserNameField.getText();
         String password = updateUserPasswordField.getText();
@@ -327,7 +328,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void deleteUser(javafx.event.ActionEvent event) {
+    private void deleteUser(ActionEvent event) {
         User selectedUser = usersTable.getSelectionModel().getSelectedItem();
         if (selectedUser == null) {
             showAlert(Alert.AlertType.WARNING, "Please select a user to delete.");
@@ -346,12 +347,12 @@ public class AdminDashboardController implements Initializable {
     }
     
     @FXML
-    private void viewUsers(javafx.event.ActionEvent event) {
+    private void viewUsers(ActionEvent event) {
         searchUsers(event); 
     }
 
     @FXML
-    private void searchAnnouncements(javafx.event.ActionEvent event) {
+    private void searchAnnouncements(ActionEvent event) {
         String searchTerm = searchAnnouncementField.getText();
         ObservableList<Announcement> announcements = FXCollections.observableArrayList();
         try (Connection conn = DBUtil.getConnection()) {
@@ -369,7 +370,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void addAnnouncement(javafx.event.ActionEvent event) {
+    private void addAnnouncement(ActionEvent event) {
         String title = addAnnouncementTitleField.getText();
         String content = addAnnouncementContentField.getText();
         if (title.isEmpty() || content.isEmpty()) {
@@ -391,7 +392,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void updateAnnouncement(javafx.event.ActionEvent event) {
+    private void updateAnnouncement(ActionEvent event) {
         String title = updateAnnouncementTitleField.getText();
         String content = updateAnnouncementContentField.getText();
         if (title.isEmpty()) {
@@ -413,7 +414,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void deleteAnnouncement(javafx.event.ActionEvent event) {
+    private void deleteAnnouncement(ActionEvent event) {
         Announcement selectedAnnouncement = announcementsTable.getSelectionModel().getSelectedItem();
         if (selectedAnnouncement == null) {
             showAlert(Alert.AlertType.WARNING, "Please select an announcement to delete.");
@@ -432,12 +433,12 @@ public class AdminDashboardController implements Initializable {
     }
     
     @FXML
-    private void viewAnnouncements(javafx.event.ActionEvent event) {
+    private void viewAnnouncements(ActionEvent event) {
         searchAnnouncements(event); 
     }
 
     @FXML
-    private void searchResources(javafx.event.ActionEvent event) {
+    private void searchResources(ActionEvent event) {
         String searchTerm = searchResourceField.getText();
         ObservableList<Resource> resources = FXCollections.observableArrayList();
         try (Connection conn = DBUtil.getConnection()) {
@@ -455,7 +456,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void uploadResource(javafx.event.ActionEvent event) {
+    private void uploadResource(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Resource File");
         fileChooser.getExtensionFilters().addAll(
@@ -478,7 +479,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void addResource(javafx.event.ActionEvent event) {
+    private void addResource(ActionEvent event) {
         String title = addResourceTitleField.getText();
         String filePath = addResourceFilePathField.getText();
         if (title.isEmpty() || filePath.isEmpty()) {
@@ -500,7 +501,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void uploadUpdateResource(javafx.event.ActionEvent event) {
+    private void uploadUpdateResource(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Resource File");
         fileChooser.getExtensionFilters().addAll(
@@ -523,7 +524,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void updateResource(javafx.event.ActionEvent event) {
+    private void updateResource(ActionEvent event) {
         String title = updateResourceTitleField.getText();
         String filePath = updateResourceFilePathField.getText();
         if (title.isEmpty()) {
@@ -545,7 +546,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void deleteResource(javafx.event.ActionEvent event) {
+    private void deleteResource(ActionEvent event) {
         Resource selectedResource = resourcesTable.getSelectionModel().getSelectedItem();
         if (selectedResource == null) {
             showAlert(Alert.AlertType.WARNING, "Please select a resource to delete.");
@@ -564,12 +565,12 @@ public class AdminDashboardController implements Initializable {
     }
     
     @FXML
-    private void viewResources(javafx.event.ActionEvent event) {
+    private void viewResources(ActionEvent event) {
         searchResources(event); 
     }
 
     @FXML
-    private void searchTasks(javafx.event.ActionEvent event) {
+    private void searchTasks(ActionEvent event) {
         String searchTerm = searchTaskField.getText();
         ObservableList<Task> tasks = FXCollections.observableArrayList();
         try (Connection conn = DBUtil.getConnection()) {
@@ -587,7 +588,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void addTask(javafx.event.ActionEvent event) {
+    private void addTask(ActionEvent event) {
         String title = addTaskTitleField.getText();
         String description = addTaskDescriptionField.getText();
         String status = addTaskStatusField.getText();
@@ -611,7 +612,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void updateTask(javafx.event.ActionEvent event) {
+    private void updateTask(ActionEvent event) {
         String title = updateTaskTitleField.getText();
         String description = updateTaskDescriptionField.getText();
         String status = updateTaskStatusField.getText();
@@ -635,7 +636,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void deleteTask(javafx.event.ActionEvent event) {
+    private void deleteTask(ActionEvent event) {
         Task selectedTask = tasksTable.getSelectionModel().getSelectedItem();
         if (selectedTask == null) {
             showAlert(Alert.AlertType.WARNING, "Please select a task to delete.");
@@ -654,12 +655,12 @@ public class AdminDashboardController implements Initializable {
     }
     
     @FXML
-    private void viewTasks(javafx.event.ActionEvent event) {
+    private void viewTasks(ActionEvent event) {
         searchTasks(event); 
     }
 
     @FXML
-    private void searchProjects(javafx.event.ActionEvent event) {
+    private void searchProjects(ActionEvent event) {
         String searchTerm = searchProjectField.getText();
         ObservableList<Project> projects = FXCollections.observableArrayList();
         try (Connection conn = DBUtil.getConnection()) {
@@ -677,7 +678,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void addProject(javafx.event.ActionEvent event) {
+    private void addProject(ActionEvent event) {
         String title = addProjectTitleField.getText();
         if (title.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Title is required.");
@@ -697,7 +698,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void updateProject(javafx.event.ActionEvent event) {
+    private void updateProject(ActionEvent event) {
         String title = updateProjectTitleField.getText();
         if (title.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Title is required.");
@@ -718,7 +719,7 @@ public class AdminDashboardController implements Initializable {
     }
 
     @FXML
-    private void deleteProject(javafx.event.ActionEvent event) {
+    private void deleteProject(ActionEvent event) {
         Project selectedProject = projectsTable.getSelectionModel().getSelectedItem();
         if (selectedProject == null) {
             showAlert(Alert.AlertType.WARNING, "Please select a project to delete.");
@@ -737,7 +738,7 @@ public class AdminDashboardController implements Initializable {
     }
     
     @FXML
-    private void viewProjects(javafx.event.ActionEvent event) {
+    private void viewProjects(ActionEvent event) {
         searchProjects(event); 
     }
 
@@ -751,14 +752,27 @@ public class AdminDashboardController implements Initializable {
     }
 
     private void navigateTo(String fxmlPath) {
-        Stage stage = (Stage) resourcesButton.getScene().getWindow();
+        Stage stage = (Stage) menuButton.getScene().getWindow();
         stage.getScene().getRoot().setOpacity(0);
         Platform.runLater(() -> {
             try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+                URL resource = getClass().getResource(fxmlPath);
+                if (resource == null) {
+                    throw new IllegalStateException("FXML resource not found: " + fxmlPath);
+                }
+                System.out.println("Loading FXML from: " + resource);
+                FXMLLoader loader = new FXMLLoader(resource);
                 AnchorPane root = loader.load();
-                AdminDashboardController controller = loader.getController();
-                controller.setCurrentEmail(currentEmail);
+                Object controller = loader.getController();
+                if (controller instanceof Initializable) {
+                    if (controller instanceof AnnouncementController) {
+                        ((AnnouncementController) controller).setCurrentEmail(currentEmail);
+                    } else if (controller instanceof DashboardController) {
+                        ((DashboardController) controller).setCurrentEmail(currentEmail);
+                    } else if (controller instanceof AdminDashboardController) {
+                        ((AdminDashboardController) controller).setCurrentEmail(currentEmail);
+                    }
+                }
                 Scene scene = new Scene(root, 1000, 600);
                 scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
                 stage.setScene(scene);

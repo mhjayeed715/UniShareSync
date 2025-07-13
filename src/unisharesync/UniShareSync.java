@@ -10,9 +10,9 @@ public class UniShareSync extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("ui/signup.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/signup.fxml"));
         Scene scene = new Scene(loader.load(), 1000, 600); 
-        scene.getStylesheets().add(getClass().getResource("css/styles.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
         stage.setTitle("UniShareSync");
         stage.setScene(scene);
         stage.setResizable(false);
