@@ -39,6 +39,16 @@
 - Extends the standard navbar with an **Admin Dashboard** button.
 - Offers access to all standard features with added admin control.
 
+### 7. Announcements Page
+- Displays a list of announcements with title, content, and priority.
+- Includes search functionality to filter by title.
+- **Admin users** can:
+  - Add new announcements.
+  - Update content of existing announcements.
+  - Delete announcements using table selection.
+- Supports real-time UI updates with TableView binding.
+
+
 ---
 
 ##  Screenshots
@@ -59,6 +69,10 @@
 
 ### Admin Navbar  
 ![Admin Navbar](screenshots/admin_navbar.png)
+
+### Announcement Page  
+![Announcement Page](screenshots/announcement_page_admin.png)
+![Announcement Page](screenshots/announcement_page_users.png)
 
 ---
 
