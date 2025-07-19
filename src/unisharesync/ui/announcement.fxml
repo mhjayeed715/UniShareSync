@@ -11,7 +11,6 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
 <AnchorPane id="AnchorPane" prefHeight="600.0" prefWidth="1000.0" styleClass="glass-background" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="unisharesync.ui.AnnouncementController">
     <children>
@@ -56,34 +55,35 @@
                     <children>
                         <HBox spacing="10.0">
                             <TextField fx:id="searchAnnouncementField" prefWidth="200" promptText="Search by Title" />
-                            <Button fx:id="searchAnnouncementButton" onAction="#searchAnnouncements" prefHeight="26.0" prefWidth="60.0" text="Search">
-                        <font>
-                           <Font size="10.0" />
-                        </font></Button>
+                            <Button fx:id="searchAnnouncementButton" onAction="#searchAnnouncements" text="Search" />
                         </HBox>
-                        <HBox fx:id="editControls" spacing="10.0" visible="false">
-                            <TextField fx:id="addAnnouncementTitleField" prefHeight="26.0" prefWidth="160.0" promptText="Title" />
-                            <TextField fx:id="addAnnouncementContentField" prefWidth="200.0" promptText="Content" />
-                            <Button fx:id="addAnnouncementButton" onAction="#addAnnouncement" prefHeight="26.0" prefWidth="60.0" text="Add">
-                        <font>
-                           <Font size="10.0" />
-                        </font></Button>
-                            <TextField fx:id="updateAnnouncementTitleField" prefWidth="160.0" promptText="Title to Update" />
-                            <TextField fx:id="updateAnnouncementContentField" prefWidth="200.0" promptText="New Content" />
-                            <Button fx:id="updateAnnouncementButton" onAction="#updateAnnouncement" prefWidth="60.0" text="Update">
-                        <font>
-                           <Font size="10.0" />
-                        </font></Button>
-                            <Button fx:id="deleteAnnouncementButton" onAction="#deleteAnnouncement" prefWidth="60.0" text="Delete">
-                        <font>
-                           <Font size="10.0" />
-                        </font></Button>
+                        <HBox fx:id="editControls" spacing="10.0" visible="false" managed="false">
+                            <children>
+                                <VBox spacing="5.0">
+                                    <Label text="Add Announcement" />
+                                    <TextField fx:id="addAnnouncementTitleField" prefWidth="200.0" promptText="Title" />
+                                    <TextField fx:id="addAnnouncementContentField" prefWidth="200.0" promptText="Content" />
+                                    <TextField fx:id="addAnnouncementImagePathField" prefWidth="200.0" promptText="Image Path (Optional)" />
+                                    <TextField fx:id="addAnnouncementPriorityField" prefWidth="200.0" promptText="Priority (Optional)" />
+                                    <Button fx:id="addAnnouncementButton" prefWidth="60.0" onAction="#addAnnouncement" text="Add" />
+                                </VBox>
+                                <VBox spacing="5.0">
+                                    <Label text="Update Announcement" />
+                                    <TextField fx:id="updateAnnouncementTitleField" prefWidth="200.0" promptText="Title to Update" />
+                                    <TextField fx:id="updateAnnouncementContentField" prefWidth="200.0" promptText="New Content" />
+                                    <TextField fx:id="updateAnnouncementImagePathField" prefWidth="200.0" promptText="New Image Path (Optional)" />
+                                    <TextField fx:id="updateAnnouncementPriorityField" prefWidth="200.0" promptText="New Priority (Optional)" />
+                                    <Button fx:id="updateAnnouncementButton" prefWidth="60.0" onAction="#updateAnnouncement" text="Update" />
+                                    <Button fx:id="deleteAnnouncementButton" prefWidth="60.0" onAction="#deleteAnnouncement" text="Delete" />
+                                </VBox>
+                            </children>
                         </HBox>
                         <TableView fx:id="announcementsTable" prefHeight="386.0" prefWidth="960.0" AnchorPane.bottomAnchor="10">
                             <columns>
-                                <TableColumn fx:id="announcementTitleCol" prefWidth="200.0" text="Title" />
-                                <TableColumn fx:id="announcementContentCol" prefWidth="300.0" text="Content" />
-                                <TableColumn fx:id="announcementPriorityCol" prefWidth="100.0" text="Priority" />
+                                <TableColumn fx:id="announcementTitleCol" prefWidth="250.0" text="Title" />
+                                <TableColumn fx:id="announcementContentCol" prefWidth="400.0" text="Content" />
+                                <TableColumn fx:id="announcementTimestampCol" prefWidth="150.0" text="Posted On" />
+                                <TableColumn fx:id="viewDetailsCol" prefWidth="100.0" text="Details" />
                             </columns>
                         </TableView>
                         <Button fx:id="viewAnnouncementsButton" onAction="#viewAnnouncements" text="View All" />

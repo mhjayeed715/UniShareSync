@@ -10,7 +10,7 @@ public class UniShareSync extends Application {
     
     @Override
     public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/signup.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/homepage.fxml"));
         Scene scene = new Scene(loader.load(), 1000, 600); 
         scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
         stage.setTitle("UniShareSync");

@@ -72,7 +72,7 @@
 
 ### Announcement Page  
 ![Announcement Page](screenshots/announcement_page_admin.png)
-![Announcement Page](screenshots/announcement_page_users.png)
+![Announcement Page](screenshots/announcement-page_users.png)
 
 ---
 
