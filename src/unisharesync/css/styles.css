@@ -222,7 +222,7 @@
 }
 
 .hero-section {
-    -fx-background-image: url("../css/hero_background.jpg");
+    -fx-background-image: url("../css/background.jpg");
     -fx-background-size: cover;
     -fx-background-position: center;
     -fx-background-radius: 10;
