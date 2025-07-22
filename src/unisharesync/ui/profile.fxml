@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane id="AnchorPane" prefHeight="600.0" prefWidth="1000.0" styleClass="glass-background" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="unisharesync.ui.ProfileController">
+    <children>
+        <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="1000.0" spacing="10.0" styleClass="header" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <Button fx:id="menuButton" mnemonicParsing="false" onAction="#toggleMenu" styleClass="hamburger-button" text="☰">
+                    <HBox.margin>
+                        <Insets left="10.0" />
+                    </HBox.margin>
+                </Button>
+                <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+                    <image>
+                        <Image url="@../css/navlogo.png" />
+                    </image>
+                    <HBox.margin>
+                        <Insets left="5.0" right="10.0" />
+                    </HBox.margin>
+                </ImageView>
+                <Label styleClass="app-name" text="UniShareSync - Profile">
+                    <HBox.margin>
+                        <Insets left="-15.0" />
+                    </HBox.margin>
+                </Label>
+            </children>
+        </HBox>
+        <VBox fx:id="sidebar" prefHeight="550.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="50.0">
+            <children>
+                <Label styleClass="sidebar-title" text="NavBar" />
+                <Label fx:id="roleLabel" styleClass="role-label" text="Role: [Loading...]" />
+                <Button fx:id="homeButton" mnemonicParsing="false" onAction="#goToHome" styleClass="nav-button" text="Home" />
+                <Button fx:id="announcementsButton" mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="nav-button" text="Announcements" />
+                <Button fx:id="resourcesButton" mnemonicParsing="false" onAction="#goToResources" styleClass="nav-button" text="Resources" />
+                <Button fx:id="projectsButton" mnemonicParsing="false" onAction="#goToProjects" styleClass="nav-button" text="Projects" />
+                <Button fx:id="profileButton" mnemonicParsing="false" onAction="#goToProfile" styleClass="nav-button" text="Profile" />
+                <Label style="-fx-text-fill: white; -fx-padding: 10 0 0 0;" text="-----------------" />
+                <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" styleClass="nav-button" text="Logout" />
+                <Button fx:id="adminDashboardButton" onAction="#goToAdminDashboard" styleClass="nav-button" text="Admin Dashboard" visible="false" />
+            </children>
+        </VBox>
+        <AnchorPane fx:id="contentArea" prefHeight="550.0" prefWidth="1000.0" styleClass="content-area" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
+            <children>
+                <VBox spacing="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+                    <children>
+                        <Label styleClass="section-title" text="User Profile" />
+                        <VBox spacing="10.0" styleClass="profile-section">
+                            <children>
+                                <Label text="Name" styleClass="form-label" />
+                                <TextField fx:id="nameField" promptText="Enter your name" styleClass="form-input" />
+                                <Label text="Email" styleClass="form-label" />
+                                <TextField fx:id="emailField" promptText="Enter your email" styleClass="form-input" />
+                                <Label text="Role" styleClass="form-label" />
+                                <Label fx:id="roleDisplayLabel" text="Role: [Loading...]" styleClass="role-label" />
+                                <HBox fx:id="adminControls" spacing="10.0" visible="false" managed="false">
+                                    <children>
+                                        <CheckBox fx:id="isAdminCheckBox" text="Admin Privileges" />
+                                        <ComboBox fx:id="roleComboBox" promptText="Select Role" styleClass="form-input" />
+                                    </children>
+                                </HBox>
+                                <Button fx:id="saveButton" text="Save Changes" styleClass="card-button" onAction="#saveProfile" />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+        </AnchorPane>
+    </children>
+</AnchorPane>

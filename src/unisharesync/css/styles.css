@@ -345,3 +345,21 @@
 .table-view .button:hover {
     -fx-background-color: #2980b9;
 }
+
+.actions-hbox {
+    -fx-alignment: center;
+    -fx-spacing: 5;
+}
+
+.projects-section {
+    -fx-padding: 20;
+}
+
+.tasks-section {
+    -fx-padding: 20;
+}
+
+.table-view .combo-box {
+    -fx-pref-height: 25px;
+    -fx-font-size: 12px;
+}
