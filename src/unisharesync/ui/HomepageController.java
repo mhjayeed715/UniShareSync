@@ -40,27 +40,29 @@ public class HomepageController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        System.out.println("HomepageController initializing...");
+        System.out.println("HomepageController: Initializing...");
         announcementTitleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         announcementContentCol.setCellValueFactory(new PropertyValueFactory<>("contentSnippet"));
         announcementTimestampCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
         setupViewDetailsColumn();
         loadAnnouncements();
-        System.out.println("HomepageController initialized");
+        System.out.println("HomepageController: Initialized");
     }
 
     public void setCurrentEmail(String email) {
-        this.currentEmail = email;
-        System.out.println("Current email set to: " + currentEmail);
+        this.currentEmail = email != null ? email.trim().toLowerCase() : null;
+        System.out.println("HomepageController: Current email set to: " + currentEmail);
     }
 
     @FXML
     private void goToLogin(ActionEvent event) {
+        System.out.println("HomepageController: Navigate to login.fxml");
         navigateTo("/unisharesync/ui/login.fxml");
     }
 
     @FXML
     private void goToSignup(ActionEvent event) {
+        System.out.println("HomepageController: Navigate to signup.fxml");
         navigateTo("/unisharesync/ui/signup.fxml");
     }
 
@@ -79,22 +81,23 @@ public class HomepageController implements Initializable {
                 }
             }
             announcementsTable.setItems(announcements);
-            System.out.println("Loaded " + announcements.size() + " announcements");
+            System.out.println("HomepageController: Loaded " + announcements.size() + " announcements");
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert("Error", "Failed to load announcements: " + e.getMessage());
+            System.out.println("HomepageController: loadAnnouncements SQLException - " + e.getMessage());
         }
     }
 
     private void setupViewDetailsColumn() {
-        System.out.println("Setting up viewDetailsCol");
+        System.out.println("HomepageController: Setting up viewDetailsCol");
         viewDetailsCol.setCellFactory(param -> new TableCell<AnnouncementTab, Void>() {
             private final Button viewButton = new Button("View");
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                System.out.println("Updating viewDetailsCol cell, empty: " + empty);
+                System.out.println("HomepageController: Updating viewDetailsCol cell, empty: " + empty);
                 if (empty) {
                     setGraphic(null);
                 } else {
@@ -129,7 +132,7 @@ public class HomepageController implements Initializable {
                 imageView.setFitWidth(200);
                 imageView.setPreserveRatio(true);
             } catch (Exception e) {
-                System.out.println("Failed to load image: " + e.getMessage());
+                System.out.println("HomepageController: Failed to load image: " + e.getMessage());
             }
         }
         Button closeButton = new Button("Close");
@@ -147,6 +150,7 @@ public class HomepageController implements Initializable {
         Stage stage = (Stage) loginButton.getScene().getWindow();
         if (stage.getScene() == null) {
             showAlert("Error", "Scene is not initialized");
+            System.out.println("HomepageController: navigateTo - Scene is not initialized");
             return;
         }
         stage.getScene().getRoot().setOpacity(0);
@@ -156,7 +160,7 @@ public class HomepageController implements Initializable {
                 if (resource == null) {
                     throw new IllegalStateException("FXML resource not found: " + fxmlPath);
                 }
-                System.out.println("Loading FXML from: " + resource);
+                System.out.println("HomepageController: Loading FXML from: " + resource);
                 FXMLLoader loader = new FXMLLoader(resource);
                 AnchorPane root = loader.load();
                 Object controller = loader.getController();
@@ -165,14 +169,24 @@ public class HomepageController implements Initializable {
                         ((HomepageController) controller).setCurrentEmail(currentEmail);
                     } else if (controller instanceof AnnouncementController) {
                         ((AnnouncementController) controller).setCurrentEmail(currentEmail);
-                    } 
+                    } else if (controller instanceof ProfileController) {
+                        ((ProfileController) controller).setCurrentEmail(currentEmail);
+                    } else if (controller instanceof ProjectController) {
+                        ((ProjectController) controller).setCurrentEmail(currentEmail);
+                    } else if (controller instanceof ResourceController) {
+                        ((ResourceController) controller).setCurrentEmail(currentEmail);
+                    } else if (controller instanceof AdminDashboardController) {
+                        ((AdminDashboardController) controller).setCurrentEmail(currentEmail);
+                    }
                 }
                 Scene scene = new Scene(root, 1000, 600);
                 scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
                 stage.setScene(scene);
                 stage.getScene().getRoot().setOpacity(1);
+                System.out.println("HomepageController: Navigated to " + fxmlPath);
             } catch (Exception e) {
                 showAlert("Error", "Failed to navigate: " + e.getMessage());
+                System.out.println("HomepageController: navigateTo Exception - " + e.getMessage());
             }
         });
     }

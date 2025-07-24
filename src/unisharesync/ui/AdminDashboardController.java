@@ -113,10 +113,11 @@ public class AdminDashboardController implements Initializable {
 
     private String currentEmail;
     private boolean isAdmin = false;
-    private static final String UPLOAD_DIR = "uploads";
+    private static final String UPLOAD_DIR = "Uploads";
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        System.out.println("AdminDashboardController: Initializing...");
         createUploadDirectory();
         setupTables();
         addUserRoleChoice.setItems(FXCollections.observableArrayList("student", "faculty"));
@@ -125,6 +126,7 @@ public class AdminDashboardController implements Initializable {
             loadUserRole();
             refreshAllTables();
         }
+        System.out.println("AdminDashboardController: Initialized, currentEmail=" + currentEmail);
     }
 
     private void createUploadDirectory() {
@@ -167,7 +169,7 @@ public class AdminDashboardController implements Initializable {
 
     @FXML
     private void toggleMenu(ActionEvent event) {
-        System.out.println("Toggle menu clicked");
+        System.out.println("AdminDashboardController: Toggle menu clicked");
         VBox sidebar = (VBox) menuButton.getScene().getRoot().lookup(".sidebar");
         if (sidebar != null) {
             sidebar.setVisible(!sidebar.isVisible());
@@ -178,48 +180,62 @@ public class AdminDashboardController implements Initializable {
             } else {
                 content.setStyle("-fx-left-anchor: 0.0;");
             }
+            System.out.println("AdminDashboardController: Sidebar visibility set to: " + sidebar.isVisible());
         } else {
-            System.out.println("Sidebar not found");
+            System.out.println("AdminDashboardController: Sidebar not found");
         }
     }
 
     @FXML
-    private void goToAnnouncements(ActionEvent event) { navigateTo("/unisharesync/ui/announcement.fxml"); }
+    private void goToAnnouncements(ActionEvent event) {
+        System.out.println("AdminDashboardController: Navigate to announcement.fxml");
+        navigateTo("/unisharesync/ui/announcement.fxml");
+    }
+
     @FXML
-    private void goToResources(ActionEvent event) { navigateTo("/unisharesync/ui/resource.fxml"); }
+    private void goToResources(ActionEvent event) {
+        System.out.println("AdminDashboardController: Navigate to resource.fxml");
+        navigateTo("/unisharesync/ui/resource.fxml");
+    }
+
     @FXML
-    private void goToProjects(ActionEvent event) { navigateTo("/unisharesync/ui/project.fxml"); }
+    private void goToProjects(ActionEvent event) {
+        System.out.println("AdminDashboardController: Navigate to project.fxml");
+        navigateTo("/unisharesync/ui/project.fxml");
+    }
+
     @FXML
-    private void goToProfile(ActionEvent event) { navigateTo("/unisharesync/ui/profile.fxml"); }
+    private void goToProfile(ActionEvent event) {
+        System.out.println("AdminDashboardController: Navigate to profile.fxml, currentEmail=" + currentEmail);
+        navigateTo("/unisharesync/ui/profile.fxml");
+    }
+
     @FXML
-    private void goToAdminDashboard(ActionEvent event) { navigateTo("/unisharesync/ui/admin_dashboard.fxml"); }
+    private void goToAdminDashboard(ActionEvent event) {
+        System.out.println("AdminDashboardController: Already on admin_dashboard.fxml");
+        navigateTo("/unisharesync/ui/admin_dashboard.fxml");
+    }
 
     @FXML
     private void handleLogout(ActionEvent event) {
-        Stage stage = (Stage) logoutButton.getScene().getWindow();
-        stage.getScene().getRoot().setOpacity(0);
-        Platform.runLater(() -> {
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/login.fxml"));
-                Scene scene = new Scene(loader.load(), 1000, 600);
-                scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-                stage.setScene(scene);
-                stage.getScene().getRoot().setOpacity(1);
-            } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Logout failed: " + e.getMessage());
-            }
-        });
+        System.out.println("AdminDashboardController: Logout clicked");
+        currentEmail = null;
+        navigateTo("/unisharesync/ui/login.fxml");
     }
 
     public void setCurrentEmail(String email) {
-        this.currentEmail = email;
-        loadUserRole();
-        refreshAllTables();
+        this.currentEmail = email != null ? email.trim().toLowerCase() : null;
+        System.out.println("AdminDashboardController: Current email set to: " + currentEmail);
+        if (currentEmail != null) {
+            loadUserRole();
+            refreshAllTables();
+        }
     }
 
     private void loadUserRole() {
         if (currentEmail == null) {
             roleLabel.setText("Role: Not Logged In");
+            System.out.println("AdminDashboardController: loadUserRole - No currentEmail, set to Not Logged In");
             return;
         }
         Connection conn = null;
@@ -227,21 +243,24 @@ public class AdminDashboardController implements Initializable {
         ResultSet rs = null;
         try {
             conn = DBUtil.getConnection();
-            String sql = "SELECT role, is_admin FROM users WHERE email = ? OR name = ?";
+            System.out.println("AdminDashboardController: loadUserRole - Database connection established");
+            String sql = "SELECT role, is_admin FROM users WHERE email = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, currentEmail);
-            stmt.setString(2, currentEmail);
             rs = stmt.executeQuery();
             if (rs.next()) {
                 String role = rs.getString("role");
                 isAdmin = rs.getBoolean("is_admin");
-                roleLabel.setText("Role: " + role + (isAdmin ? " (Admin)" : ""));
+                roleLabel.setText("Role: " + (isAdmin ? "Admin" : role));
+                System.out.println("AdminDashboardController: loadUserRole - Loaded role: " + role + ", isAdmin: " + isAdmin);
             } else {
                 roleLabel.setText("Role: Unknown");
+                System.out.println("AdminDashboardController: loadUserRole - No user found for email: " + currentEmail);
             }
         } catch (SQLException e) {
             roleLabel.setText("Role: Error");
             showAlert(Alert.AlertType.ERROR, "Role load failed: " + e.getMessage());
+            System.out.println("AdminDashboardController: loadUserRole SQLException - " + e.getMessage());
         } finally {
             if (conn != null) try { conn.close(); } catch (SQLException e) {}
             if (rs != null) try { rs.close(); } catch (SQLException e) {}
@@ -558,7 +577,7 @@ public class AdminDashboardController implements Initializable {
             stmt.setString(1, selectedResource.getTitle());
             stmt.executeUpdate();
             showAlert(Alert.AlertType.INFORMATION, "Resource deleted successfully!");
-            searchResources(event); // Refresh table
+            searchResources(event); 
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Delete failed: " + e.getMessage());
         }
@@ -629,7 +648,7 @@ public class AdminDashboardController implements Initializable {
             stmt.executeUpdate();
             showAlert(Alert.AlertType.INFORMATION, "Task updated successfully!");
             clearTaskFields();
-            searchTasks(event); // Refresh table
+            searchTasks(event); 
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Update failed: " + e.getMessage());
         }
@@ -731,7 +750,7 @@ public class AdminDashboardController implements Initializable {
             stmt.setString(1, selectedProject.getTitle());
             stmt.executeUpdate();
             showAlert(Alert.AlertType.INFORMATION, "Project deleted successfully!");
-            searchProjects(event); // Refresh table
+            searchProjects(event); 
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Delete failed: " + e.getMessage());
         }
@@ -740,15 +759,6 @@ public class AdminDashboardController implements Initializable {
     @FXML
     private void viewProjects(ActionEvent event) {
         searchProjects(event); 
-    }
-
-    private void showAlert(Alert.AlertType type, String message) {
-        Alert alert = new Alert(type, message);
-        alert.setTitle("UniShareSync");
-        alert.setHeaderText(null);
-        alert.getDialogPane().getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-        alert.getDialogPane().getStyleClass().add("glass-background");
-        alert.showAndWait();
     }
 
     private void navigateTo(String fxmlPath) {
@@ -760,27 +770,50 @@ public class AdminDashboardController implements Initializable {
                 if (resource == null) {
                     throw new IllegalStateException("FXML resource not found: " + fxmlPath);
                 }
-                System.out.println("Loading FXML from: " + resource);
+                System.out.println("AdminDashboardController: Loading FXML from: " + resource);
                 FXMLLoader loader = new FXMLLoader(resource);
                 AnchorPane root = loader.load();
                 Object controller = loader.getController();
                 if (controller instanceof Initializable) {
                     if (controller instanceof AnnouncementController) {
                         ((AnnouncementController) controller).setCurrentEmail(currentEmail);
+                        System.out.println("AdminDashboardController: Passed currentEmail " + currentEmail + " to AnnouncementController");
                     } else if (controller instanceof DashboardController) {
                         ((DashboardController) controller).setCurrentEmail(currentEmail);
+                        System.out.println("AdminDashboardController: Passed currentEmail " + currentEmail + " to DashboardController");
                     } else if (controller instanceof AdminDashboardController) {
                         ((AdminDashboardController) controller).setCurrentEmail(currentEmail);
+                        System.out.println("AdminDashboardController: Passed currentEmail " + currentEmail + " to AdminDashboardController");
+                    } else if (controller instanceof ProfileController) {
+                        ((ProfileController) controller).setCurrentEmail(currentEmail);
+                        System.out.println("AdminDashboardController: Passed currentEmail " + currentEmail + " to ProfileController");
+                    } else if (controller instanceof ProjectController) {
+                        ((ProjectController) controller).setCurrentEmail(currentEmail);
+                        System.out.println("AdminDashboardController: Passed currentEmail " + currentEmail + " to ProjectController");
+                    } else if (controller instanceof ResourceController) {
+                        ((ResourceController) controller).setCurrentEmail(currentEmail);
+                        System.out.println("AdminDashboardController: Passed currentEmail " + currentEmail + " to ResourceController");
                     }
                 }
                 Scene scene = new Scene(root, 1000, 600);
                 scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
                 stage.setScene(scene);
                 stage.getScene().getRoot().setOpacity(1);
+                System.out.println("AdminDashboardController: Navigated to " + fxmlPath);
             } catch (Exception e) {
                 showAlert(Alert.AlertType.ERROR, "Navigation failed: " + e.getMessage());
+                System.out.println("AdminDashboardController: navigateTo Exception - " + e.getMessage());
             }
         });
+    }
+
+    private void showAlert(Alert.AlertType type, String message) {
+        Alert alert = new Alert(type, message);
+        alert.setTitle("UniShareSync");
+        alert.setHeaderText(null);
+        alert.getDialogPane().getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
+        alert.getDialogPane().getStyleClass().add("glass-background");
+        alert.showAndWait();
     }
 
     private void clearUserFields() {

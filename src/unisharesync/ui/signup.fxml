@@ -38,7 +38,7 @@
                            </font>
                         </Label>
                         <Label styleClass="subtitle" text="Create a free account" textFill="#898080" />
-                        <TextField fx:id="nameField" maxWidth="250.0" promptText="Full Name" styleClass="form-input" />
+                        <TextField fx:id="nameField" maxWidth="250.0" promptText="Username" styleClass="form-input" />
                         <TextField fx:id="emailField" maxWidth="250.0" promptText="Email" styleClass="form-input" />
                         <PasswordField fx:id="passwordField" maxWidth="250.0" promptText="Password" styleClass="form-input" />
                         <ComboBox fx:id="roleComboBox" maxWidth="250.0" prefWidth="150.0" promptText="Select Role" styleClass="form-input" />

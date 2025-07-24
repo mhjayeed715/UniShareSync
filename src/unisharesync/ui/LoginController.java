@@ -22,33 +22,31 @@ import java.sql.SQLException;
 
 public class LoginController implements Initializable {
 
-    @FXML
-    private AnchorPane rootPane;
-    @FXML
-    private TextField loginField; 
-    @FXML
-    private PasswordField passwordField;
-    @FXML
-    private Button loginButton;
-    @FXML
-    private Hyperlink signupLink;
+    @FXML private AnchorPane rootPane;
+    @FXML private TextField loginField;
+    @FXML private PasswordField passwordField;
+    @FXML private Button loginButton;
+    @FXML private Hyperlink signupLink;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-    }    
+        System.out.println("LoginController: Initialized");
+    }
 
     @FXML
     private void handleLogin() {
-        System.out.println("Login button clicked");
+        System.out.println("LoginController: Login button clicked");
         String loginInput = loginField.getText().trim();
         String password = passwordField.getText();
 
         if (loginInput.isEmpty() || password.isEmpty()) {
             showAlert(Alert.AlertType.ERROR, "All fields are required!");
+            System.out.println("LoginController: Empty loginInput or password");
             return;
         }
         if (!isValidEmail(loginInput) && !isValidName(loginInput)) {
             showAlert(Alert.AlertType.ERROR, "Invalid username or email format!");
+            System.out.println("LoginController: Invalid format for loginInput: " + loginInput);
             return;
         }
 
@@ -57,54 +55,57 @@ public class LoginController implements Initializable {
         ResultSet rs = null;
         try {
             conn = DBUtil.getConnection();
-            String sql = "SELECT password, is_admin FROM users WHERE email = ? OR name = ?";
+            System.out.println("LoginController: Database connection established");
+            String sql = "SELECT email, password, is_admin FROM users WHERE email = ? OR name = ?";
             stmt = conn.prepareStatement(sql);
-            stmt.setString(1, loginInput); 
-            stmt.setString(2, loginInput); 
+            stmt.setString(1, loginInput.toLowerCase()); 
+            stmt.setString(2, loginInput.trim()); 
             rs = stmt.executeQuery();
             if (rs.next()) {
+                String email = rs.getString("email").trim().toLowerCase();
                 String hashedPassword = rs.getString("password");
                 boolean isAdmin = rs.getBoolean("is_admin");
                 if (DBUtil.checkPassword(password, hashedPassword)) {
                     showAlert(Alert.AlertType.INFORMATION, "Login successful! " + (isAdmin ? "Admin access granted." : ""));
+                    System.out.println("LoginController: Login successful for email: " + email);
                     clearFields();
                     Stage stage = (Stage) loginField.getScene().getWindow();
                     stage.getScene().getRoot().setOpacity(0);
                     Platform.runLater(() -> {
                         try {
                             FXMLLoader loader;
-                            if (isAdmin) {
-                                loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/admin_dashboard.fxml"));
-                                AnchorPane root = loader.load();
-                                AdminDashboardController controller = loader.getController();
-                                controller.setCurrentEmail(loginInput);
-                                Scene scene = new Scene(root, 1000, 600);
-                                scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-                                stage.setScene(scene);
-                            } else {
-                                loader = new FXMLLoader(getClass().getResource("/unisharesync/ui/dashboard.fxml"));
-                                AnchorPane root = loader.load();
-                                DashboardController controller = loader.getController();
-                                controller.setCurrentEmail(loginInput);
-                                Scene scene = new Scene(root, 1000, 600);
-                                scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-                                stage.setScene(scene);
+                            String fxmlPath = isAdmin ? "/unisharesync/ui/admin_dashboard.fxml" : "/unisharesync/ui/dashboard.fxml";
+                            loader = new FXMLLoader(getClass().getResource(fxmlPath));
+                            AnchorPane root = loader.load();
+                            Object controller = loader.getController();
+                            if (controller instanceof DashboardController) {
+                                ((DashboardController) controller).setCurrentEmail(email);
+                            } else if (controller instanceof AdminDashboardController) {
+                                ((AdminDashboardController) controller).setCurrentEmail(email);
                             }
+                            Scene scene = new Scene(root, 1000, 600);
+                            scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
+                            stage.setScene(scene);
                             stage.getScene().getRoot().setOpacity(1);
+                            System.out.println("LoginController: Navigated to " + fxmlPath);
                         } catch (Exception e) {
                             showAlert(Alert.AlertType.ERROR, "Navigation failed: " + e.getMessage());
+                            System.out.println("LoginController: Navigation failed - " + e.getMessage());
                         }
                     });
                 } else {
                     showAlert(Alert.AlertType.ERROR, "Invalid username/email or password!");
+                    System.out.println("LoginController: Invalid password for loginInput: " + loginInput);
                 }
             } else {
                 showAlert(Alert.AlertType.ERROR, "Invalid username/email or password!");
+                System.out.println("LoginController: No user found for loginInput: " + loginInput);
             }
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Database error: " + e.getMessage());
+            System.out.println("LoginController: SQLException - " + e.getMessage());
         } finally {
-            if (conn != null) try { conn.close(); } catch (SQLException e) {}
+            DBUtil.closeConnection(conn);
             if (rs != null) try { rs.close(); } catch (SQLException e) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
         }
@@ -112,7 +113,7 @@ public class LoginController implements Initializable {
 
     @FXML
     private void goToSignup() {
-        System.out.println("Signup link clicked");
+        System.out.println("LoginController: Signup link clicked");
         Stage stage = (Stage) signupLink.getScene().getWindow();
         stage.getScene().getRoot().setOpacity(0);
         Platform.runLater(() -> {
@@ -122,12 +123,14 @@ public class LoginController implements Initializable {
                 scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
                 stage.setScene(scene);
                 stage.getScene().getRoot().setOpacity(1);
+                System.out.println("LoginController: Navigated to signup.fxml");
             } catch (Exception e) {
                 showAlert(Alert.AlertType.ERROR, "Navigation failed: " + e.getMessage());
+                System.out.println("LoginController: Navigation failed - " + e.getMessage());
             }
         });
     }
-    
+
     private boolean isValidEmail(String input) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
         Pattern pattern = Pattern.compile(emailRegex);

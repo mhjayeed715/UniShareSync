@@ -363,3 +363,12 @@
     -fx-pref-height: 25px;
     -fx-font-size: 12px;
 }
+.info-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #2c3e50;
+    -fx-padding: 5 10;
+    -fx-background-color: rgba(242, 242, 242, 0.7);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(204, 204, 204, 0.5);
+    -fx-border-radius: 8;
+}

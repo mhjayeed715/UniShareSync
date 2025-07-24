@@ -3,6 +3,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.image.Image?>
@@ -39,7 +40,6 @@
             <children>
                 <Label styleClass="sidebar-title" text="NavBar" />
                 <Label fx:id="roleLabel" styleClass="role-label" text="Role: [Loading...]" />
-                <Button fx:id="homeButton" mnemonicParsing="false" onAction="#goToHome" styleClass="nav-button" text="Home" />
                 <Button fx:id="announcementsButton" mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="nav-button" text="Announcements" />
                 <Button fx:id="resourcesButton" mnemonicParsing="false" onAction="#goToResources" styleClass="nav-button" text="Resources" />
                 <Button fx:id="projectsButton" mnemonicParsing="false" onAction="#goToProjects" styleClass="nav-button" text="Projects" />
@@ -54,21 +54,39 @@
                 <VBox spacing="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
                     <children>
                         <Label styleClass="section-title" text="User Profile" />
-                        <VBox spacing="10.0" styleClass="profile-section">
+                        <VBox fx:id="viewPane" spacing="10.0" styleClass="profile-section">
+                            <children>
+                                <Label text="Name" styleClass="form-label" />
+                                <Label fx:id="nameLabel" styleClass="info-label" text="[Loading...]" />
+                                <Label text="Email" styleClass="form-label" />
+                                <Label fx:id="emailLabel" styleClass="info-label" text="[Loading...]" />
+                                <Label text="Role" styleClass="form-label" />
+                                <Label fx:id="roleDisplayLabel" styleClass="info-label" text="Role: [Loading...]" />
+                                <Button fx:id="editButton" text="Edit Profile" styleClass="card-button" onAction="#enableEditMode" />
+                            </children>
+                        </VBox>
+                        <VBox fx:id="editPane" spacing="10.0" styleClass="profile-section" visible="false" managed="false">
                             <children>
                                 <Label text="Name" styleClass="form-label" />
                                 <TextField fx:id="nameField" promptText="Enter your name" styleClass="form-input" />
                                 <Label text="Email" styleClass="form-label" />
                                 <TextField fx:id="emailField" promptText="Enter your email" styleClass="form-input" />
-                                <Label text="Role" styleClass="form-label" />
-                                <Label fx:id="roleDisplayLabel" text="Role: [Loading...]" styleClass="role-label" />
+                                <Label text="New Password (leave blank to keep current)" styleClass="form-label" />
+                                <PasswordField fx:id="newPasswordField" promptText="Enter new password" styleClass="form-input" />
+                                <Label text="Confirm New Password" styleClass="form-label" />
+                                <PasswordField fx:id="confirmPasswordField" promptText="Confirm new password" styleClass="form-input" />
                                 <HBox fx:id="adminControls" spacing="10.0" visible="false" managed="false">
                                     <children>
                                         <CheckBox fx:id="isAdminCheckBox" text="Admin Privileges" />
                                         <ComboBox fx:id="roleComboBox" promptText="Select Role" styleClass="form-input" />
                                     </children>
                                 </HBox>
-                                <Button fx:id="saveButton" text="Save Changes" styleClass="card-button" onAction="#saveProfile" />
+                                <HBox spacing="10.0">
+                                    <children>
+                                        <Button fx:id="saveButton" text="Save Changes" styleClass="card-button" onAction="#saveProfile" />
+                                        <Button fx:id="cancelButton" text="Cancel" styleClass="card-button" onAction="#cancelEdit" />
+                                    </children>
+                                </HBox>
                             </children>
                         </VBox>
                     </children>
