@@ -20,6 +20,8 @@ import javafx.stage.Stage;
 public class DashboardController implements Initializable {
 
     @FXML private Button menuButton;
+    @FXML private VBox sidebar;
+    @FXML private AnchorPane contentArea;
     @FXML private Label roleLabel;
     @FXML private Button announcementsButton;
     @FXML private Button resourcesButton;
@@ -27,371 +29,305 @@ public class DashboardController implements Initializable {
     @FXML private Button profileButton;
     @FXML private Button logoutButton;
     @FXML private Label welcomeLabel;
+    @FXML private Label welcomeStatsLabel;
     @FXML private Button addAnnouncementButton;
-    @FXML private Label resourcesStatLabel;
-    @FXML private Label projectsStatLabel;
-    @FXML private Label announcementsStatLabel;
-    @FXML private VBox activityFeedVBox;
     @FXML private Button uploadResourceButton;
     @FXML private Button viewTasksButton;
+    @FXML private Label announcementsCountLabel;
+    @FXML private Label resourcesCountLabel;
+    @FXML private Label projectsCountLabel;
+    @FXML private VBox activityFeedVBox;
 
     private String currentEmail;
     private boolean isAdmin = false;
+    private boolean isFaculty = false;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        System.out.println("DashboardController: Initialized");
-        if (menuButton != null) System.out.println("DashboardController: menuButton found");
         if (currentEmail != null) {
-            loadWelcomeData();
-            loadStats();
-            loadActivityFeed();
-            checkAdminRedirect();
+            loadUserData();
         }
     }
 
     public void setCurrentEmail(String email) {
         this.currentEmail = email != null ? email.trim().toLowerCase() : null;
-        System.out.println("DashboardController: Current email set to: " + currentEmail);
-        loadUserRole();
-        loadWelcomeData();
-        loadStats();
-        loadActivityFeed();
-        updateRoleBasedVisibility();
-        checkAdminRedirect();
+        loadUserData();
     }
 
     @FXML
     private void toggleMenu(ActionEvent event) {
-        System.out.println("DashboardController: Toggle menu clicked");
-        VBox sidebar = (VBox) menuButton.getScene().getRoot().lookup(".sidebar");
-        if (sidebar != null) {
-            sidebar.setVisible(!sidebar.isVisible());
-            AnchorPane content = (AnchorPane) menuButton.getScene().getRoot().lookup(".content-area");
-            if (sidebar.isVisible()) {
-                sidebar.toFront();
-                content.setStyle("-fx-left-anchor: 200.0;");
-            } else {
-                content.setStyle("-fx-left-anchor: 0.0;");
-            }
-            System.out.println("DashboardController: Sidebar visibility set to: " + sidebar.isVisible());
-        } else {
-            System.out.println("DashboardController: Sidebar not found");
-        }
+        boolean isVisible = !sidebar.isVisible();
+        sidebar.setVisible(isVisible);
+        AnchorPane.setLeftAnchor(contentArea, isVisible ? 200.0 : 0.0);
     }
 
     @FXML
     private void goToAnnouncements(ActionEvent event) {
-        System.out.println("DashboardController: Navigate to Announcements");
         navigateTo("/unisharesync/ui/announcement.fxml");
     }
 
     @FXML
     private void goToResources(ActionEvent event) {
-        System.out.println("DashboardController: Navigate to Resources");
         navigateTo("/unisharesync/ui/resource.fxml");
     }
 
     @FXML
     private void goToProjects(ActionEvent event) {
-        System.out.println("DashboardController: Navigate to Projects");
         navigateTo("/unisharesync/ui/project.fxml");
     }
 
     @FXML
     private void goToProfile(ActionEvent event) {
-        System.out.println("DashboardController: Navigate to Profile");
         navigateTo("/unisharesync/ui/profile.fxml");
     }
 
     @FXML
     private void handleLogout(ActionEvent event) {
-        System.out.println("DashboardController: Logout clicked");
+        currentEmail = null;
         navigateTo("/unisharesync/ui/login.fxml");
     }
 
     @FXML
     private void addAnnouncement(ActionEvent event) {
-        if (isAdmin) {
-            showAlert(Alert.AlertType.INFORMATION, "Add Announcement functionality to be implemented in Week 3.");
+        if (isAdmin || isFaculty) {
+            navigateTo("/unisharesync/ui/announcement.fxml");
         } else {
-            showAlert(Alert.AlertType.WARNING, "Only admins can add announcements!");
+            showAlert(Alert.AlertType.WARNING, "Only admins and faculty can add announcements!");
         }
     }
 
     @FXML
     private void uploadResource(ActionEvent event) {
-        if (isAdmin) {
-            showAlert(Alert.AlertType.INFORMATION, "Upload Resource functionality to be implemented in Week 3.");
+        if (isAdmin || isFaculty) {
+            navigateTo("/unisharesync/ui/resource.fxml");
         } else {
-            showAlert(Alert.AlertType.WARNING, "Only admins can upload resources!");
+            showAlert(Alert.AlertType.WARNING, "Only admins and faculty can upload resources!");
         }
     }
 
     @FXML
     private void viewTasks(ActionEvent event) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        StringBuilder tasks = new StringBuilder();
-        try {
-            conn = DBUtil.getConnection();
-            String sql = "SELECT title, description, status FROM tasks WHERE user_id = (SELECT id FROM users WHERE email = ?)";
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, currentEmail);
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                tasks.append("Title: ").append(rs.getString("title"))
-                     .append(", Description: ").append(rs.getString("description"))
-                     .append(", Status: ").append(rs.getString("status")).append("\n");
-            }
-            showAlert(Alert.AlertType.INFORMATION, tasks.length() > 0 ? tasks.toString() : "No tasks found.");
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Failed to view tasks: " + e.getMessage());
-            System.out.println("DashboardController: viewTasks SQLException - " + e.getMessage());
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+        navigateTo("/unisharesync/ui/project.fxml");
+    }
+
+    private void loadUserData() {
+        if (currentEmail == null) {
+            setDefaultLabels();
+            return;
         }
+        
+        loadUserRole();
+        loadWelcomeData();
+        loadStatistics();
+        loadActivityFeed();
+        updateRoleBasedVisibility();
     }
 
     private void loadUserRole() {
-        if (currentEmail == null) {
-            roleLabel.setText("Role: Not Logged In");
-            System.out.println("DashboardController: loadUserRole - No currentEmail");
-            return;
-        }
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtil.getConnection();
-            String sql = "SELECT role, is_admin FROM users WHERE email = ?";
-            stmt = conn.prepareStatement(sql);
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT name, role, is_admin FROM users WHERE email = ?")) {
             stmt.setString(1, currentEmail);
-            rs = stmt.executeQuery();
-            if (rs.next()) {
-                String role = rs.getString("role");
-                isAdmin = rs.getBoolean("is_admin");
-                roleLabel.setText("Role: " + (role != null ? role : "User") + (isAdmin ? " (Admin)" : ""));
-                System.out.println("DashboardController: loadUserRole - Role: " + role + ", isAdmin: " + isAdmin);
-            } else {
-                roleLabel.setText("Role: Unknown");
-                System.out.println("DashboardController: loadUserRole - No user found for email: " + currentEmail);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    String role = rs.getString("role");
+                    isAdmin = rs.getInt("is_admin") == 1;
+                    isFaculty = "faculty".equalsIgnoreCase(role);
+                    
+                    String displayRole = role != null ? role : "student";
+                    if (isAdmin) displayRole = "Admin";
+                    
+                    roleLabel.setText("Role: " + displayRole);
+                } else {
+                    roleLabel.setText("Role: Unknown");
+                }
             }
         } catch (SQLException e) {
             roleLabel.setText("Role: Error");
-            showAlert(Alert.AlertType.ERROR, "Role load failed: " + e.getMessage());
-            System.out.println("DashboardController: loadUserRole SQLException - " + e.getMessage());
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+            showAlert(Alert.AlertType.ERROR, "Failed to load user role: " + e.getMessage());
         }
     }
 
     private void loadWelcomeData() {
-        if (currentEmail == null || welcomeLabel == null) {
-            System.out.println("DashboardController: loadWelcomeData - No currentEmail or welcomeLabel");
-            return;
-        }
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtil.getConnection();
-            String sql = "SELECT name FROM users WHERE email = ?";
-            stmt = conn.prepareStatement(sql);
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT name FROM users WHERE email = ?")) {
             stmt.setString(1, currentEmail);
-            rs = stmt.executeQuery();
-            String userName = rs.next() ? rs.getString("name") : "User";
-            int announcementsCount = getNewAnnouncementsCount();
-            int tasksCount = getPendingTasksCount();
-            welcomeLabel.setText("👋 Welcome, " + userName + "!");
-            VBox welcomeVBox = (VBox) welcomeLabel.getParent();
-            if (welcomeVBox != null && welcomeVBox.getChildren().size() > 1) {
-                Label statsLabel = (Label) welcomeVBox.getChildren().get(1);
-                statsLabel.setText("You have " + announcementsCount + " new announcements and " + tasksCount + " pending tasks.");
+            try (ResultSet rs = stmt.executeQuery()) {
+                String userName = rs.next() ? rs.getString("name") : "User";
+                welcomeLabel.setText("👋 Welcome, " + userName + "!");
+                
+                int announcementsCount = getRecentAnnouncementsCount();
+                int pendingTasksCount = getPendingTasksCount();
+                int activeProjectsCount = getActiveProjectsCount();
+                
+                welcomeStatsLabel.setText(String.format("You have %d recent announcements, %d pending tasks, and %d active projects.", 
+                    announcementsCount, pendingTasksCount, activeProjectsCount));
             }
-            System.out.println("DashboardController: loadWelcomeData - Name: " + userName + ", Announcements: " + announcementsCount + ", Tasks: " + tasksCount);
         } catch (SQLException e) {
             welcomeLabel.setText("👋 Welcome, User!");
-            VBox welcomeVBox = (VBox) welcomeLabel.getParent();
-            if (welcomeVBox != null && welcomeVBox.getChildren().size() > 1) {
-                Label statsLabel = (Label) welcomeVBox.getChildren().get(1);
-                statsLabel.setText("Loading stats failed.");
-            }
-            System.out.println("DashboardController: loadWelcomeData SQLException - " + e.getMessage());
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+            welcomeStatsLabel.setText("Unable to load statistics.");
         }
     }
 
-    private void loadStats() {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtil.getConnection();
-            if (conn == null) {
-                throw new SQLException("Database connection is null");
+    private void loadStatistics() {
+        try (Connection conn = DBUtil.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM announcements WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                int count = rs.getInt(1);
+                announcementsCountLabel.setText(count + " New This Week");
             }
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM resources WHERE user_id = (SELECT id FROM users WHERE email = ?)");
-            stmt.setString(1, currentEmail);
-            rs = stmt.executeQuery();
-            rs.next();
-            resourcesStatLabel.setText(rs.getInt(1) + " Available");
-            System.out.println("DashboardController: Resources count: " + rs.getInt(1));
 
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM project_memberships WHERE user_id = (SELECT id FROM users WHERE email = ?)");
-            stmt.setString(1, currentEmail);
-            rs = stmt.executeQuery();
-            rs.next();
-            projectsStatLabel.setText(rs.getInt(1) + " Active");
-            System.out.println("DashboardController: Projects count: " + rs.getInt(1));
+            stmt = conn.prepareStatement("SELECT COUNT(*) FROM resources");
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                int count = rs.getInt(1);
+                resourcesCountLabel.setText(count + " Available");
+            }
 
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM announcements WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-            rs = stmt.executeQuery();
-            rs.next();
-            announcementsStatLabel.setText(rs.getInt(1) + " New");
-            System.out.println("DashboardController: Announcements count: " + rs.getInt(1));
+            stmt = conn.prepareStatement("SELECT COUNT(*) FROM projects");
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                int count = rs.getInt(1);
+                projectsCountLabel.setText(count + " Total");
+            }
         } catch (SQLException e) {
-            resourcesStatLabel.setText("0 Available");
-            projectsStatLabel.setText("0 Active");
-            announcementsStatLabel.setText("0 New");
-            showAlert(Alert.AlertType.ERROR, "Stats load failed: " + e.getMessage());
-            System.out.println("DashboardController: loadStats SQLException - " + e.getMessage());
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+            announcementsCountLabel.setText("Error");
+            resourcesCountLabel.setText("Error");
+            projectsCountLabel.setText("Error");
         }
     }
 
     private void loadActivityFeed() {
         activityFeedVBox.getChildren().clear();
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtil.getConnection();
-            String sql = "SELECT a.title AS announcement, r.title AS resource, p.title AS project, pm.joined_at " +
-                        "FROM announcements a " +
-                        "LEFT JOIN resources r ON a.user_id = r.user_id " +
-                        "LEFT JOIN project_memberships pm ON a.user_id = pm.user_id " +
-                        "LEFT JOIN projects p ON pm.project_id = p.id " +
-                        "WHERE a.user_id = (SELECT id FROM users WHERE email = ?) " +
-                        "OR r.user_id = (SELECT id FROM users WHERE email = ?) " +
-                        "OR pm.user_id = (SELECT id FROM users WHERE email = ?) " +
-                        "ORDER BY COALESCE(a.created_at, r.created_at, pm.joined_at) DESC LIMIT 3";
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, currentEmail);
-            stmt.setString(2, currentEmail);
-            stmt.setString(3, currentEmail);
-            rs = stmt.executeQuery();
-            boolean hasData = false;
-            while (rs.next()) {
-                String announcement = rs.getString("announcement");
-                String resource = rs.getString("resource");
-                String project = rs.getString("project");
-                if (announcement != null) {
-                    activityFeedVBox.getChildren().add(new Label("📢 New Announcement: " + announcement));
-                    hasData = true;
-                } else if (resource != null) {
-                    activityFeedVBox.getChildren().add(new Label("📁 New Resource: " + resource));
-                    hasData = true;
-                } else if (project != null) {
-                    activityFeedVBox.getChildren().add(new Label("👥 Project Update: Added to " + project));
-                    hasData = true;
+        
+        Label titleLabel = new Label("Latest Activity");
+        titleLabel.getStyleClass().add("feed-title");
+        titleLabel.setStyle("-fx-padding: 8 0 0 10;");
+        activityFeedVBox.getChildren().add(titleLabel);
+
+        try (Connection conn = DBUtil.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(
+                "SELECT 'announcement' as type, title, created_at FROM announcements " +
+                "UNION ALL " +
+                "SELECT 'resource' as type, title, created_at FROM resources " +
+                "UNION ALL " +
+                "SELECT 'project' as type, title, created_at FROM projects " +
+                "ORDER BY created_at DESC LIMIT 5"
+            );
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                boolean hasActivity = false;
+                while (rs.next()) {
+                    hasActivity = true;
+                    String type = rs.getString("type");
+                    String title = rs.getString("title");
+                    String icon = getIconForType(type);
+                    
+                    Label activityLabel = new Label(icon + " " + title);
+                    activityLabel.getStyleClass().add("feed-item");
+                    activityLabel.setStyle("-fx-padding: 2 0 2 5;");
+                    activityFeedVBox.getChildren().add(activityLabel);
+                }
+                
+                if (!hasActivity) {
+                    Label noActivityLabel = new Label("No recent activity found.");
+                    noActivityLabel.getStyleClass().add("feed-item");
+                    noActivityLabel.setStyle("-fx-padding: 2 0 2 5;");
+                    activityFeedVBox.getChildren().add(noActivityLabel);
                 }
             }
-            if (!hasData) {
-                activityFeedVBox.getChildren().add(new Label("No recent activity found."));
-            }
-            System.out.println("DashboardController: loadActivityFeed - Loaded activity feed");
         } catch (SQLException e) {
-            activityFeedVBox.getChildren().add(new Label("Failed to load activity feed."));
-            showAlert(Alert.AlertType.ERROR, "Activity feed load failed: " + e.getMessage());
-            System.out.println("DashboardController: loadActivityFeed SQLException - " + e.getMessage());
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+            Label errorLabel = new Label("Failed to load activity feed.");
+            errorLabel.getStyleClass().add("feed-item");
+            errorLabel.setStyle("-fx-padding: 2 0 2 5;");
+            activityFeedVBox.getChildren().add(errorLabel);
         }
     }
 
-    private int getNewAnnouncementsCount() {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtil.getConnection();
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM announcements WHERE created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)");
-            rs = stmt.executeQuery();
-            rs.next();
-            int count = rs.getInt(1);
-            System.out.println("DashboardController: getNewAnnouncementsCount - Count: " + count);
-            return count;
+    private String getIconForType(String type) {
+        switch (type) {
+            case "announcement": return "📢";
+            case "resource": return "📁";
+            case "project": return "👥";
+            default: return "•";
+        }
+    }
+
+    private int getRecentAnnouncementsCount() {
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT COUNT(*) FROM announcements WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
         } catch (SQLException e) {
-            System.out.println("DashboardController: getNewAnnouncementsCount SQLException - " + e.getMessage());
             return 0;
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
         }
     }
 
     private int getPendingTasksCount() {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            conn = DBUtil.getConnection();
-            stmt = conn.prepareStatement("SELECT COUNT(*) FROM tasks WHERE user_id = (SELECT id FROM users WHERE email = ?) AND status = 'pending'");
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT COUNT(*) FROM tasks t " +
+                 "JOIN group_memberships gm ON t.group_id = gm.group_id " +
+                 "WHERE gm.user_id = (SELECT id FROM users WHERE email = ?) " +
+                 "AND gm.status = 'accepted' AND t.status = 'pending'")) {
             stmt.setString(1, currentEmail);
-            rs = stmt.executeQuery();
-            rs.next();
-            int count = rs.getInt(1);
-            System.out.println("DashboardController: getPendingTasksCount - Count: " + count);
-            return count;
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
         } catch (SQLException e) {
-            System.out.println("DashboardController: getPendingTasksCount SQLException - " + e.getMessage());
             return 0;
-        } finally {
-            DBUtil.closeConnection(conn);
-            if (rs != null) try { rs.close(); } catch (SQLException e) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException e) {}
+        }
+    }
+
+    private int getActiveProjectsCount() {
+        try (Connection conn = DBUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                 "SELECT COUNT(DISTINCT p.id) FROM projects p " +
+                 "JOIN project_groups pg ON p.id = pg.project_id " +
+                 "JOIN group_memberships gm ON pg.group_id = gm.group_id " +
+                 "WHERE gm.user_id = (SELECT id FROM users WHERE email = ?) " +
+                 "AND gm.status = 'accepted'")) {
+            stmt.setString(1, currentEmail);
+            try (ResultSet rs = stmt.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            return 0;
         }
     }
 
     private void updateRoleBasedVisibility() {
         if (addAnnouncementButton != null) {
-            addAnnouncementButton.setVisible(isAdmin);
+            addAnnouncementButton.setVisible(isAdmin || isFaculty);
         }
         if (uploadResourceButton != null) {
-            uploadResourceButton.setVisible(isAdmin);
+            uploadResourceButton.setVisible(isAdmin || isFaculty);
         }
-        System.out.println("DashboardController: updateRoleBasedVisibility - addAnnouncementButton: " + (addAnnouncementButton != null ? addAnnouncementButton.isVisible() : "null") + ", uploadResourceButton: " + (uploadResourceButton != null ? uploadResourceButton.isVisible() : "null"));
     }
 
-    private void checkAdminRedirect() {
-        if (isAdmin && !getClass().getSimpleName().equals("AdminDashboardController")) {
-            System.out.println("DashboardController: Redirecting admin to admin_dashboard.fxml");
-            navigateTo("/unisharesync/ui/admin_dashboard.fxml");
-        }
+    private void setDefaultLabels() {
+        welcomeLabel.setText("👋 Welcome, Guest!");
+        welcomeStatsLabel.setText("Please log in to view your dashboard.");
+        roleLabel.setText("Role: Guest");
+        announcementsCountLabel.setText("0 New");
+        resourcesCountLabel.setText("0 Available");
+        projectsCountLabel.setText("0 Active");
+        
+        if (addAnnouncementButton != null) addAnnouncementButton.setVisible(false);
+        if (uploadResourceButton != null) uploadResourceButton.setVisible(false);
     }
 
     private void navigateTo(String fxmlPath) {
         Stage stage = (Stage) menuButton.getScene().getWindow();
         if (stage.getScene() == null) {
             showAlert(Alert.AlertType.ERROR, "Scene is not initialized");
-            System.out.println("DashboardController: navigateTo - Scene is not initialized");
             return;
         }
+        
         stage.getScene().getRoot().setOpacity(0);
         Platform.runLater(() -> {
             try {
@@ -399,10 +335,11 @@ public class DashboardController implements Initializable {
                 if (resource == null) {
                     throw new IllegalStateException("FXML resource not found: " + fxmlPath);
                 }
-                System.out.println("DashboardController: Loading FXML from: " + resource);
+                
                 FXMLLoader loader = new FXMLLoader(resource);
                 AnchorPane root = loader.load();
                 Object controller = loader.getController();
+                
                 if (controller instanceof Initializable) {
                     if (controller instanceof DashboardController) {
                         ((DashboardController) controller).setCurrentEmail(currentEmail);
@@ -418,14 +355,13 @@ public class DashboardController implements Initializable {
                         ((ResourceController) controller).setCurrentEmail(currentEmail);
                     }
                 }
+                
                 Scene scene = new Scene(root, 1000, 600);
                 scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
                 stage.setScene(scene);
                 stage.getScene().getRoot().setOpacity(1);
-                System.out.println("DashboardController: Navigated to " + fxmlPath);
             } catch (Exception e) {
                 showAlert(Alert.AlertType.ERROR, "Navigation failed: " + e.getMessage());
-                System.out.println("DashboardController: navigateTo Exception - " + e.getMessage());
             }
         });
     }

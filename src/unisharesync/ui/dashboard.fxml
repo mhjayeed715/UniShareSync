@@ -30,22 +30,28 @@
             <Label styleClass="app-name" text="UniShareSync">
                <HBox.margin>
                   <Insets left="-15.0" />
-               </HBox.margin></Label>
+               </HBox.margin>
+            </Label>
          </children>
       </HBox>
-      <VBox prefHeight="200.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="50.0">
+      
+      <VBox fx:id="sidebar" prefHeight="200.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="50.0">
          <children>
-            <Label styleClass="sidebar-title" text="NavBar" />
-            <Label fx:id="roleLabel" styleClass="role-label" text="Role: [Loading... ]" />
-            <Button fx:id="announcementsButton" layoutX="10.0" layoutY="53.0" mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="nav-button" text="Announcements" />
+            <Label styleClass="sidebar-title" text="Navigation" />
+            <Label fx:id="roleLabel" styleClass="role-label" text="Role: [Loading...]" />
+            <Button fx:id="announcementsButton" mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="nav-button" text="Announcements" />
             <Button fx:id="resourcesButton" mnemonicParsing="false" onAction="#goToResources" styleClass="nav-button" text="Resources" />
-            <Button fx:id="projectsButton" layoutX="10.0" layoutY="28.0" mnemonicParsing="false" onAction="#goToProjects" styleClass="nav-button" text="Projects" />
-            <Button fx:id="profileButton" layoutX="10.0" layoutY="79.0" mnemonicParsing="false" onAction="#goToProfile" styleClass="nav-button" text="Profile" />
+            <Button fx:id="projectsButton" mnemonicParsing="false" onAction="#goToProjects" styleClass="nav-button" text="Projects" />
+            <Button fx:id="profileButton" mnemonicParsing="false" onAction="#goToProfile" styleClass="nav-button" text="Profile" />
             <Label style="-fx-text-fill: white; -fx-padding: 10 0 0 0;" text="-----------------" />
-            <Button fx:id="logoutButton" layoutX="10.0" layoutY="104.0" mnemonicParsing="false" onAction="#handleLogout" styleClass="nav-button" text="Logout" />
+            <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" styleClass="nav-button" text="Logout" />
          </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
       </VBox>
-      <AnchorPane prefHeight="200.0" prefWidth="200.0" styleClass="content-area" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
+      
+      <AnchorPane fx:id="contentArea" prefHeight="200.0" prefWidth="200.0" styleClass="content-area" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
                <children>
@@ -53,15 +59,16 @@
                      <children>
                         <VBox prefHeight="87.0" prefWidth="647.0">
                            <children>
-                              <Label fx:id="welcomeLabel" prefHeight="18.0" prefWidth="222.0" styleClass="welcome-text" text="👋 Welcome, [Loading Name]!" />
-                              <Label prefHeight="18.0" prefWidth="650.0" styleClass="welcome-stats" text="[Loading Stats]" />
+                              <Label fx:id="welcomeLabel" prefHeight="18.0" prefWidth="222.0" styleClass="welcome-text" text="👋 Welcome, [Loading...]!" />
+                              <Label fx:id="welcomeStatsLabel" prefHeight="18.0" prefWidth="650.0" styleClass="welcome-stats" text="Loading your dashboard statistics..." />
                            </children>
                         </VBox>
                      </children>
                   </HBox>
+                  
                   <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
                      <children>
-                        <VBox layoutX="500.0" layoutY="10.0" prefHeight="200.0" prefWidth="280.0" styleClass="card">
+                        <VBox prefHeight="200.0" prefWidth="280.0" styleClass="card">
                            <children>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
@@ -82,9 +89,10 @@
                                  </font>
                               </Label>
                               <Button mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="card-button" text="View More" />
-                              <Button fx:id="addAnnouncementButton" layoutX="10.0" layoutY="44.0" mnemonicParsing="false" onAction="#addAnnouncement" styleClass="quick-action-button" text="➕ Add Announcement" />
+                              <Button fx:id="addAnnouncementButton" mnemonicParsing="false" onAction="#addAnnouncement" styleClass="quick-action-button" text="➕ Add Announcement" visible="false" />
                            </children>
                         </VBox>
+                        
                         <VBox prefHeight="200.0" prefWidth="280.0" styleClass="card">
                            <children>
                               <HBox prefHeight="100.0" prefWidth="200.0">
@@ -106,10 +114,11 @@
                                  </font>
                               </Label>
                               <Button mnemonicParsing="false" onAction="#goToResources" styleClass="card-button" text="View More" />
-                              <Button fx:id="uploadResourceButton" layoutX="10.0" layoutY="44.0" mnemonicParsing="false" onAction="#uploadResource" styleClass="quick-action-button" text="📤 Upload Note" />
+                              <Button fx:id="uploadResourceButton" mnemonicParsing="false" onAction="#uploadResource" styleClass="quick-action-button" text="📤 Upload Resource" visible="false" />
                            </children>
                         </VBox>
-                        <VBox layoutX="365.0" layoutY="10.0" prefHeight="200.0" prefWidth="280.0" styleClass="card">
+                        
+                        <VBox prefHeight="200.0" prefWidth="280.0" styleClass="card">
                            <children>
                               <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
@@ -129,38 +138,41 @@
                                     <Font size="11.0" />
                                  </font>
                               </Label>
-                              <Button fx:id="viewTasksButton" mnemonicParsing="false" onAction="#goToProjects" styleClass="card-button" text="View More" />
-                              <Button layoutX="10.0" layoutY="44.0" mnemonicParsing="false" onAction="#viewTasks" styleClass="quick-action-button" text="✅ View Tasks" />
+                              <Button mnemonicParsing="false" onAction="#goToProjects" styleClass="card-button" text="View More" />
+                              <Button fx:id="viewTasksButton" mnemonicParsing="false" onAction="#viewTasks" styleClass="quick-action-button" text="✅ View Tasks" />
                            </children>
                         </VBox>
                      </children>
                   </HBox>
-                  <HBox alignment="CENTER" layoutX="10.0" layoutY="48.0" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
+                  
+                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="20.0">
                      <children>
-                        <VBox layoutX="500.0" layoutY="10.0" prefHeight="100.0" prefWidth="200.0" styleClass="card">
+                        <VBox prefHeight="100.0" prefWidth="200.0" styleClass="card">
                            <children>
                               <Label styleClass="card-title" text="📢 Announcements" />
-                              <Label styleClass="card-text" text="5 New">
+                              <Label fx:id="announcementsCountLabel" styleClass="card-text" text="Loading...">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
                               </Label>
                            </children>
                         </VBox>
+                        
                         <VBox prefHeight="100.0" prefWidth="200.0" styleClass="card">
                            <children>
                               <Label styleClass="card-title" text="📘 Resources" />
-                              <Label styleClass="card-text" text="12 Available">
+                              <Label fx:id="resourcesCountLabel" styleClass="card-text" text="Loading...">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
                               </Label>
                            </children>
                         </VBox>
-                        <VBox layoutX="365.0" layoutY="10.0" prefHeight="100.0" prefWidth="200.0" styleClass="card">
+                        
+                        <VBox prefHeight="100.0" prefWidth="200.0" styleClass="card">
                            <children>
                               <Label styleClass="card-title" text="🛠 Projects" />
-                              <Label styleClass="card-text" text="3 Active">
+                              <Label fx:id="projectsCountLabel" styleClass="card-text" text="Loading...">
                                  <font>
                                     <Font size="11.0" />
                                  </font>
@@ -169,24 +181,19 @@
                         </VBox>
                      </children>
                   </HBox>
+                  
                   <VBox fx:id="activityFeedVBox" prefHeight="110.0" prefWidth="960.0" styleClass="activity-feed">
                      <children>
                         <Label styleClass="feed-title" text="Latest Activity">
                            <VBox.margin>
                               <Insets left="10.0" top="8.0" />
-                           </VBox.margin></Label>
-                        <Label fx:id="announcementsStatLabel" layoutX="10.0" layoutY="10.0" styleClass="feed-item" text="📢 New Announcement">
+                           </VBox.margin>
+                        </Label>
+                        <Label styleClass="feed-item" text="Loading recent activity...">
                            <VBox.margin>
                               <Insets left="5.0" />
-                           </VBox.margin></Label>
-                        <Label fx:id="resourcesStatLabel" layoutX="10.0" layoutY="28.0" styleClass="feed-item" text="📁 New Resource">
-                           <VBox.margin>
-                              <Insets left="5.0" />
-                           </VBox.margin></Label>
-                        <Label fx:id="projectsStatLabel" layoutX="10.0" layoutY="45.0" styleClass="feed-item" text="👥 Project Update">
-                           <VBox.margin>
-                              <Insets left="5.0" />
-                           </VBox.margin></Label>
+                           </VBox.margin>
+                        </Label>
                      </children>
                      <VBox.margin>
                         <Insets bottom="10.0" />
