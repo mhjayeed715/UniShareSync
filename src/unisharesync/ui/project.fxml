@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<AnchorPane id="AnchorPane" prefHeight="600.0" prefWidth="1000.0" styleClass="glass-background" xmlns="http://javafx.com/javafx/20.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="unisharesync.ui.ProjectController">
+<children>
+   <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="1000.0" spacing="10.0" styleClass="header" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <children>
+         <Button fx:id="menuButton" mnemonicParsing="false" onAction="#toggleMenu" styleClass="hamburger-button" text="☰">
+            <HBox.margin>
+               <Insets left="10.0" />
+            </HBox.margin>
+         </Button>
+         <ImageView fitHeight="40.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+            <image>
+               <Image url="@../css/projects.png" />
+            </image>
+            <HBox.margin>
+               <Insets left="5.0" right="10.0" />
+            </HBox.margin>
+         </ImageView>
+         <Label styleClass="app-name" text="UniShareSync - Projects">
+            <HBox.margin>
+               <Insets left="-15.0" />
+            </HBox.margin>
+         </Label>
+      </children>
+   </HBox>
+
+   <VBox fx:id="sidebar" prefHeight="550.0" prefWidth="200.0" spacing="10.0" styleClass="sidebar" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="50.0">
+      <children>
+         <Label styleClass="sidebar-title" text="Navigation">
+            <VBox.margin>
+               <Insets top="10.0" />
+            </VBox.margin>
+         </Label>
+         <Label fx:id="roleLabel" styleClass="role-label" text="Role: [Loading...]" />
+         <Button fx:id="announcementsButton" mnemonicParsing="false" onAction="#goToAnnouncements" styleClass="nav-button" text="Announcements" />
+         <Button fx:id="resourcesButton" mnemonicParsing="false" onAction="#goToResources" styleClass="nav-button" text="Resources" />
+         <Button fx:id="projectsButton" mnemonicParsing="false" onAction="#goToProjects" styleClass="nav-button" text="Projects" />
+         <Button fx:id="profileButton" mnemonicParsing="false" onAction="#goToProfile" styleClass="nav-button" text="Profile" />
+         <Label style="-fx-text-fill: white; -fx-padding: 10 0 0 0;" text="-----------------" />
+         <Button fx:id="logoutButton" mnemonicParsing="false" onAction="#handleLogout" styleClass="nav-button" text="Logout" />
+         <Button fx:id="adminDashboardButton" onAction="#goToAdminDashboard" styleClass="nav-button" text="Admin Dashboard" visible="false" />
+      </children>
+      <padding>
+         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+      </padding>
+   </VBox>
+
+   <AnchorPane fx:id="contentArea" styleClass="content-area" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="50.0">
+      <children>
+         <ScrollPane fitToWidth="true" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <content>
+               <VBox spacing="20.0">
+                  <children>
+                     <Label styleClass="section-title" text="Projects" />
+                     
+                     <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <children>
+                           <Button fx:id="createProjectButton" mnemonicParsing="false" onAction="#createProject" styleClass="card-button" text="Create Project" visible="false" />
+                        </children>
+                     </HBox>
+                     
+                     <TableView fx:id="projectsTable" prefHeight="200.0">
+                        <columns>
+                           <TableColumn fx:id="projectTitleCol" prefWidth="200.0" text="Title" />
+                           <TableColumn fx:id="projectDescriptionCol" prefWidth="250.0" text="Description" />
+                           <TableColumn fx:id="projectGroupLimitCol" prefWidth="80.0" text="Limit" />
+                           <TableColumn fx:id="projectGroupCountCol" prefWidth="80.0" text="Groups" />
+                           <TableColumn fx:id="projectCreatedAtCol" prefWidth="120.0" text="Created" />
+                           <TableColumn fx:id="createGroupCol" prefWidth="100.0" text="Create Group" />
+                           <TableColumn fx:id="viewGroupsCol" prefWidth="100.0" text="View Groups" />
+                        </columns>
+                     </TableView>
+                     
+                     <Label fx:id="groupsSectionTitle" styleClass="section-title" text="Groups" visible="false" />
+                     
+                     <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <children>
+                           <Button fx:id="createGroupButton" mnemonicParsing="false" onAction="#createGroup" styleClass="card-button" text="Create Group" visible="false" />
+                        </children>
+                     </HBox>
+                     
+                     <TableView fx:id="groupsTable" prefHeight="200.0" visible="false">
+                        <columns>
+                           <TableColumn fx:id="groupNameCol" prefWidth="180.0" text="Group Name" />
+                           <TableColumn fx:id="groupCreatorCol" prefWidth="180.0" text="Creator" />
+                           <TableColumn fx:id="groupMemberCountCol" prefWidth="80.0" text="Members" />
+                           <TableColumn fx:id="groupCreatedAtCol" prefWidth="120.0" text="Created" />
+                           <TableColumn fx:id="joinGroupCol" prefWidth="80.0" text="Join" />
+                           <TableColumn fx:id="viewTasksCol" prefWidth="100.0" text="View Tasks" />
+                        </columns>
+                     </TableView>
+                     
+                     <Label fx:id="joinRequestsSectionTitle" styleClass="section-title" text="Join Requests" visible="false" />
+                     
+                     <TableView fx:id="joinRequestsTable" prefHeight="150.0" visible="false">
+                        <columns>
+                           <TableColumn fx:id="requestUserCol" prefWidth="200.0" text="User" />
+                           <TableColumn fx:id="requestStatusCol" prefWidth="100.0" text="Status" />
+                           <TableColumn fx:id="requestActionsCol" prefWidth="200.0" text="Actions" />
+                        </columns>
+                     </TableView>
+                     
+                     <Label fx:id="tasksSectionTitle" styleClass="section-title" text="Tasks" visible="false" />
+                     
+                     <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <children>
+                           <Button fx:id="createTaskButton" mnemonicParsing="false" onAction="#createTask" styleClass="card-button" text="Create Task" visible="false" />
+                        </children>
+                     </HBox>
+                     
+                     <TableView fx:id="tasksTable" prefHeight="200.0" visible="false">
+                        <columns>
+                           <TableColumn fx:id="taskTitleCol" prefWidth="180.0" text="Title" />
+                           <TableColumn fx:id="taskDescriptionCol" prefWidth="250.0" text="Description" />
+                           <TableColumn fx:id="taskAssignedToCol" prefWidth="120.0" text="Assigned To" />
+                           <TableColumn fx:id="taskStatusCol" prefWidth="100.0" text="Status" />
+                           <TableColumn fx:id="taskCreatedAtCol" prefWidth="120.0" text="Created" />
+                           <TableColumn fx:id="taskActionsCol" prefWidth="150.0" text="Actions" />
+                        </columns>
+                     </TableView>
+                  </children>
+                  <padding>
+                     <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                  </padding>
+               </VBox>
+            </content>
+         </ScrollPane>
+      </children>
+   </AnchorPane>
+</children>
+</AnchorPane>
