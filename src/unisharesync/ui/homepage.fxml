@@ -56,7 +56,7 @@
                                         <VBox spacing="10.0" styleClass="feature-card">
                                             <ImageView fitHeight="40.0" fitWidth="40.0" preserveRatio="true">
                                                 <image>
-                                                    <Image url="@../css/promote.png" />
+                                                    <Image url="@../css/announcementhome.png" />
                                                 </image>
                                             </ImageView>
                                             <Label styleClass="feature-title" text="Announcements" />
@@ -65,7 +65,7 @@
                                         <VBox spacing="10.0" styleClass="feature-card">
                                             <ImageView fitHeight="40.0" fitWidth="40.0" preserveRatio="true">
                                                 <image>
-                                                    <Image url="@../css/stack-of-books.png" />
+                                                    <Image url="@../css/resourceshome.png" />
                                                 </image>
                                             </ImageView>
                                             <Label styleClass="feature-title" text="Resources" />
@@ -74,7 +74,7 @@
                                         <VBox spacing="10.0" styleClass="feature-card">
                                             <ImageView fitHeight="40.0" fitWidth="40.0" preserveRatio="true">
                                                 <image>
-                                                    <Image url="@../css/projects.png" />
+                                                    <Image url="@../css/projectionhome.png" />
                                                 </image>
                                             </ImageView>
                                             <Label styleClass="feature-title" text="Projects" />
@@ -123,7 +123,6 @@
                     <Label styleClass="footer-title" text="UniShareSync" />
                     <Label styleClass="footer-text" text="© 2025 UniShareSync. All rights reserved." />
                 </VBox>
-                    <Label prefHeight="18.0" prefWidth="540.0" styleClass="contact-desc" text="Contact us at mehrabjayeed715@gmail.com." />
             </children>
         </HBox>
     </children>

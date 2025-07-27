@@ -32,7 +32,7 @@
                               </ImageView>
                            </children>
                         </HBox>
-                        <Label styleClass="main-title" text="Welcome">
+                        <Label styleClass="main-title" text="Join UniShareSync">
                            <font>
                               <Font name="System Bold" size="20.0" />
                            </font>
