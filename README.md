@@ -127,7 +127,7 @@ Database uses role-based access and enum-like behavior (`student`, `faculty`, `a
 ### Admin Dashboard  
 ![Admin Dashboard](screenshots/admindashuser.png)
 ![Admin Dashboard](screenshots/admindashannounce.png)
-![Admin Dashboard](screenshots/admindashresource.png)
+![Admin Dashboard](screenshots/admindadashresource.png)
 ![Admin Dashboard](screenshots/admindashproject.png)
 ![Admin Dashboard](screenshots/admindashtask.png)
 
@@ -139,16 +139,16 @@ Database uses role-based access and enum-like behavior (`student`, `faculty`, `a
 
 ### Announcement Page  
 ![Announcement Page](screenshots/announcementpage.png)
-![Announcement Page](screenshots/adminannouncement1.png)
+![Announcement Page](screenshots/admindashannounce1.png)
 
 ### Resource Page  
 ![Resource Page](screenshots/resourcepage.png)
-![Resource Page](screenshots/adminaresource1.png)
+![Resource Page](screenshots/admindashresource1.png)
 
 ### Project Page  
 ![Project Page](screenshots/projectpage.png)
-![Project Page](screenshots/adminaproject1.png)
-![Project Page](screenshots/adminaproject2.png)
+![Project Page](screenshots/admindashproject1.png)
+![Project Page](screenshots/admindashproject2.png)
 
 
 ### Profile Page  
@@ -168,7 +168,7 @@ Database uses role-based access and enum-like behavior (`student`, `faculty`, `a
 
 ## 👨‍💻 Author
 
-**S. M. Mehrab Hossain Jayed **  
+**S. M. Mehrab Hossain Jayeed **  
 📧 [GitHub Profile](https://github.com/mhjayeed715)
 
 ---
