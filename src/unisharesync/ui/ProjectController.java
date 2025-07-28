@@ -175,7 +175,7 @@ public class ProjectController implements Initializable {
 
     @FXML
     private void goToResources(ActionEvent event) {
-        navigateTo("/unisharesync/ui/resources.fxml");
+        navigateTo("/unisharesync/ui/resource.fxml");
     }
 
     @FXML

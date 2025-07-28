@@ -24,6 +24,7 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.geometry.Insets;
 import javafx.stage.Stage;
+import javafx.stage.Modality;
 
 public class HomepageController implements Initializable {
 
@@ -37,16 +38,30 @@ public class HomepageController implements Initializable {
     @FXML private TableColumn<AnnouncementTab, Void> viewDetailsCol;
 
     private String currentEmail;
+    private ObservableList<AnnouncementTab> announcementsList;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         System.out.println("HomepageController: Initializing...");
+        
+        // Initialize the list first
+        announcementsList = FXCollections.observableArrayList();
+        
+        // Set up table columns
         announcementTitleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         announcementContentCol.setCellValueFactory(new PropertyValueFactory<>("contentSnippet"));
         announcementTimestampCol.setCellValueFactory(new PropertyValueFactory<>("createdAt"));
+        
+        // Set the items to the table
+        announcementsTable.setItems(announcementsList);
+        
+        // Setup the view details column
         setupViewDetailsColumn();
+        
+        // Load announcements
         loadAnnouncements();
-        System.out.println("HomepageController: Initialized");
+        
+        System.out.println("HomepageController: Initialized with " + announcementsList.size() + " announcements");
     }
 
     public void setCurrentEmail(String email) {
@@ -67,21 +82,34 @@ public class HomepageController implements Initializable {
     }
 
     private void loadAnnouncements() {
-        ObservableList<AnnouncementTab> announcements = FXCollections.observableArrayList();
+        System.out.println("HomepageController: Loading announcements...");
+        
         try (Connection conn = DBUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
                  "SELECT title, content, created_at, image_path FROM announcements ORDER BY created_at DESC")) {
+            
+            // Clear existing data
+            announcementsList.clear();
+            
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
+                    String title = rs.getString("title");
                     String content = rs.getString("content");
-                    String snippet = content.length() > 100 ? content.substring(0, 100) + "..." : content;
-                    String createdAt = rs.getString("created_at") != null ? rs.getString("created_at") : "N/A";
-                    String imagePath = rs.getString("image_path") != null ? rs.getString("image_path") : "";
-                    announcements.add(new AnnouncementTab(rs.getString("title"), content, snippet, createdAt, imagePath));
+                    String snippet = content != null && content.length() > 100 ? 
+                        content.substring(0, 100) + "..." : content;
+                    String createdAt = rs.getString("created_at") != null ? 
+                        rs.getString("created_at") : "N/A";
+                    String imagePath = rs.getString("image_path") != null ? 
+                        rs.getString("image_path") : "";
+                    
+                    AnnouncementTab announcement = new AnnouncementTab(title, content, snippet, createdAt, imagePath);
+                    announcementsList.add(announcement);
+                    System.out.println("HomepageController: Added announcement: " + title);
                 }
             }
-            announcementsTable.setItems(announcements);
-            System.out.println("HomepageController: Loaded " + announcements.size() + " announcements");
+            
+            System.out.println("HomepageController: Successfully loaded " + announcementsList.size() + " announcements");
+            
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert("Error", "Failed to load announcements: " + e.getMessage());
@@ -91,80 +119,149 @@ public class HomepageController implements Initializable {
 
     private void setupViewDetailsColumn() {
         System.out.println("HomepageController: Setting up viewDetailsCol");
+        
         viewDetailsCol.setCellFactory(param -> new TableCell<AnnouncementTab, Void>() {
             private final Button viewButton = new Button("View");
+            private AnnouncementTab currentAnnouncement;
+            
+            {
+                viewButton.setStyle("-fx-background-color: linear-gradient(to right, #1E88E5, #26A69A); " +
+                                  "-fx-text-fill: white; " +
+                                  "-fx-font-size: 12px; " +
+                                  "-fx-padding: 5 10; " +
+                                  "-fx-background-radius: 4;");
+                
+                viewButton.setOnAction(event -> {
+                    if (currentAnnouncement != null) {
+                        System.out.println("HomepageController: Viewing announcement: " + currentAnnouncement.getTitle());
+                        showAnnouncementDetails(currentAnnouncement);
+                    } else {
+                        System.out.println("HomepageController: No announcement to view");
+                    }
+                });
+            }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                System.out.println("HomepageController: Updating viewDetailsCol cell, empty: " + empty);
-                if (empty) {
+                
+                if (empty || getTableRow() == null) {
                     setGraphic(null);
+                    currentAnnouncement = null;
                 } else {
-                    viewButton.setOnAction(event -> {
-                        AnnouncementTab announcement = getTableView().getItems().get(getIndex());
-                        showAnnouncementDetails(announcement);
-                    });
-                    setGraphic(viewButton);
+                    // Get the announcement from the table row
+                    currentAnnouncement = (AnnouncementTab) getTableRow().getItem();
+                    if (currentAnnouncement != null) {
+                        setGraphic(viewButton);
+                    } else {
+                        setGraphic(null);
+                    }
                 }
             }
         });
     }
 
     private void showAnnouncementDetails(AnnouncementTab announcement) {
-        Stage popup = new Stage();
-        VBox vbox = new VBox(10);
-        vbox.setPadding(new Insets(10));
-        vbox.getStyleClass().add("popup-content");
+        try {
+            System.out.println("HomepageController: Showing details for: " + announcement.getTitle());
+            
+            Stage popup = new Stage();
+            popup.initModality(Modality.APPLICATION_MODAL);
+            popup.initOwner(announcementsTable.getScene().getWindow());
+            
+            VBox vbox = new VBox(15);
+            vbox.setPadding(new Insets(20));
+            vbox.setStyle("-fx-background-color: white; " +
+                         "-fx-background-radius: 10; " +
+                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 5);");
 
-        Label titleLabel = new Label(announcement.getTitle());
-        titleLabel.getStyleClass().add("popup-title");
-        TextArea contentArea = new TextArea(announcement.getContent());
-        contentArea.setEditable(false);
-        contentArea.setWrapText(true);
-        contentArea.setPrefHeight(200);
-        Label timestampLabel = new Label("Posted on: " + announcement.getCreatedAt());
-        timestampLabel.getStyleClass().add("popup-timestamp");
-        ImageView imageView = new ImageView();
-        if (announcement.getImagePath() != null && !announcement.getImagePath().isEmpty()) {
-            try {
-                imageView.setImage(new javafx.scene.image.Image(new File(announcement.getImagePath()).toURI().toString()));
-                imageView.setFitWidth(200);
-                imageView.setPreserveRatio(true);
-            } catch (Exception e) {
-                System.out.println("HomepageController: Failed to load image: " + e.getMessage());
+            Label titleLabel = new Label(announcement.getTitle());
+            titleLabel.setStyle("-fx-font-size: 18px; " +
+                              "-fx-font-weight: bold; " +
+                              "-fx-text-fill: #1a202c;");
+            titleLabel.setWrapText(true);
+            
+            ScrollPane scrollPane = new ScrollPane();
+            TextArea contentArea = new TextArea(announcement.getContent());
+            contentArea.setEditable(false);
+            contentArea.setWrapText(true);
+            contentArea.setPrefHeight(200);
+            contentArea.setStyle("-fx-background-color: #f8fafc; " +
+                               "-fx-border-color: #e2e8f0; " +
+                               "-fx-border-radius: 5;");
+            scrollPane.setContent(contentArea);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setPrefHeight(220);
+            
+            Label timestampLabel = new Label("Posted on: " + announcement.getCreatedAt());
+            timestampLabel.setStyle("-fx-font-size: 12px; " +
+                                  "-fx-text-fill: #64748b;");
+            
+            ImageView imageView = new ImageView();
+            if (announcement.getImagePath() != null && !announcement.getImagePath().isEmpty()) {
+                try {
+                    File imageFile = new File(announcement.getImagePath());
+                    if (imageFile.exists()) {
+                        imageView.setImage(new javafx.scene.image.Image(imageFile.toURI().toString()));
+                        imageView.setFitWidth(300);
+                        imageView.setPreserveRatio(true);
+                        imageView.setSmooth(true);
+                    }
+                } catch (Exception e) {
+                    System.out.println("HomepageController: Failed to load image: " + e.getMessage());
+                }
             }
-        }
-        Button closeButton = new Button("Close");
-        closeButton.setOnAction(e -> popup.close());
+            
+            Button closeButton = new Button("Close");
+            closeButton.setStyle("-fx-background-color: linear-gradient(to right, #1E88E5, #26A69A); " +
+                                "-fx-text-fill: white; " +
+                                "-fx-padding: 10 20; " +
+                                "-fx-background-radius: 5;");
+            closeButton.setOnAction(e -> {
+                System.out.println("HomepageController: Closing popup");
+                popup.close();
+            });
 
-        vbox.getChildren().addAll(titleLabel, contentArea, timestampLabel, imageView, closeButton);
-        Scene scene = new Scene(vbox, 400, 400);
-        scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-        popup.setScene(scene);
-        popup.setTitle("Announcement Details");
-        popup.show();
+            vbox.getChildren().addAll(titleLabel, scrollPane, timestampLabel);
+            if (imageView.getImage() != null) {
+                vbox.getChildren().add(imageView);
+            }
+            vbox.getChildren().add(closeButton);
+            
+            Scene scene = new Scene(vbox, 450, 500);
+            popup.setScene(scene);
+            popup.setTitle("Announcement Details");
+            popup.setResizable(false);
+            popup.show();
+            
+            System.out.println("HomepageController: Popup shown successfully");
+            
+        } catch (Exception e) {
+            System.out.println("HomepageController: Error showing announcement details: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Error", "Failed to show announcement details: " + e.getMessage());
+        }
     }
 
     private void navigateTo(String fxmlPath) {
-        Stage stage = (Stage) loginButton.getScene().getWindow();
-        if (stage.getScene() == null) {
-            showAlert("Error", "Scene is not initialized");
-            System.out.println("HomepageController: navigateTo - Scene is not initialized");
-            return;
-        }
-        stage.getScene().getRoot().setOpacity(0);
-        Platform.runLater(() -> {
-            try {
-                URL resource = getClass().getResource(fxmlPath);
-                if (resource == null) {
-                    throw new IllegalStateException("FXML resource not found: " + fxmlPath);
-                }
-                System.out.println("HomepageController: Loading FXML from: " + resource);
-                FXMLLoader loader = new FXMLLoader(resource);
-                AnchorPane root = loader.load();
-                Object controller = loader.getController();
-                if (controller instanceof Initializable) {
+        try {
+            Stage stage = (Stage) loginButton.getScene().getWindow();
+            if (stage.getScene() == null) {
+                showAlert("Error", "Scene is not initialized");
+                return;
+            }
+            
+            Platform.runLater(() -> {
+                try {
+                    URL resource = getClass().getResource(fxmlPath);
+                    if (resource == null) {
+                        throw new IllegalStateException("FXML resource not found: " + fxmlPath);
+                    }
+                    
+                    FXMLLoader loader = new FXMLLoader(resource);
+                    AnchorPane root = loader.load();
+                    Object controller = loader.getController();
+                    
                     if (controller instanceof HomepageController) {
                         ((HomepageController) controller).setCurrentEmail(currentEmail);
                     } else if (controller instanceof AnnouncementController) {
@@ -178,25 +275,40 @@ public class HomepageController implements Initializable {
                     } else if (controller instanceof AdminDashboardController) {
                         ((AdminDashboardController) controller).setCurrentEmail(currentEmail);
                     }
+                    
+                    Scene scene = new Scene(root, 1000, 600);
+                    try {
+                        scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
+                    } catch (Exception cssError) {
+                        System.out.println("HomepageController: CSS loading failed, using inline styles");
+                    }
+                    
+                    stage.setScene(scene);
+                    System.out.println("HomepageController: Navigated to " + fxmlPath);
+                    
+                } catch (Exception e) {
+                    showAlert("Error", "Failed to navigate: " + e.getMessage());
+                    e.printStackTrace();
                 }
-                Scene scene = new Scene(root, 1000, 600);
-                scene.getStylesheets().add(getClass().getResource("/unisharesync/css/styles.css").toExternalForm());
-                stage.setScene(scene);
-                stage.getScene().getRoot().setOpacity(1);
-                System.out.println("HomepageController: Navigated to " + fxmlPath);
-            } catch (Exception e) {
-                showAlert("Error", "Failed to navigate: " + e.getMessage());
-                System.out.println("HomepageController: navigateTo Exception - " + e.getMessage());
-            }
-        });
+            });
+        } catch (Exception e) {
+            showAlert("Error", "Navigation error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            try {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle(title);
+                alert.setHeaderText(null);
+                alert.setContentText(message);
+                alert.showAndWait();
+            } catch (Exception e) {
+                System.out.println("HomepageController: Error showing alert: " + e.getMessage());
+            }
+        });
     }
 
     public static class AnnouncementTab {
@@ -207,11 +319,11 @@ public class HomepageController implements Initializable {
         private final StringProperty imagePath = new SimpleStringProperty();
 
         public AnnouncementTab(String title, String content, String contentSnippet, String createdAt, String imagePath) {
-            this.title.set(title);
-            this.content.set(content);
-            this.contentSnippet.set(contentSnippet);
-            this.createdAt.set(createdAt);
-            this.imagePath.set(imagePath);
+            this.title.set(title != null ? title : "");
+            this.content.set(content != null ? content : "");
+            this.contentSnippet.set(contentSnippet != null ? contentSnippet : "");
+            this.createdAt.set(createdAt != null ? createdAt : "");
+            this.imagePath.set(imagePath != null ? imagePath : "");
         }
 
         public String getTitle() { return title.get(); }
