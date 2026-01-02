@@ -25,7 +25,7 @@ const DashboardPage = () => {
     },
     { 
       id: 2, 
-      user: 'CSE 401 Group', 
+      user: 'CSE 3311 Group', 
       action: 'updated project status', 
       target: 'AI Chatbot Implementation', 
       time: '4 hours ago',
