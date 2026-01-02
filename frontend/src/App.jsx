@@ -1,32 +1,55 @@
 import React, { useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import OtpVerificationPage from './pages/OtpVerificationPage';
 import AppLayout from './pages/AppLayout';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('landing'); // landing, login, signup, app
+const App = () => {
+  const [page, setPage] = useState('landing');
+  const [userEmail, setUserEmail] = useState('');
+  const [userId, setUserId] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleNavigate = (newPage) => {
+    setPage(newPage);
+  };
+  
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  }
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setPage('login');
+  }
 
   const renderPage = () => {
-    switch(currentPage) {
+    if (isAuthenticated) {
+      return <AppLayout onLogout={handleLogout} />;
+    }
+
+    switch (page) {
       case 'landing':
-        return <LandingPage onNavigate={setCurrentPage} />;
+        return <LandingPage onNavigate={handleNavigate} />;
       case 'login':
-        return <LoginPage onNavigate={setCurrentPage} onLogin={() => setCurrentPage('app')} />;
+        return <LoginPage onNavigate={handleNavigate} onLoginSuccess={handleLoginSuccess} setUserEmail={setUserEmail} setUserId={setUserId} />;
       case 'signup':
-        return <SignupPage onNavigate={setCurrentPage} />;
-      case 'app':
-        return <AppLayout onLogout={() => setCurrentPage('landing')} />;
+        return <SignupPage onNavigate={handleNavigate} />;
+      case 'otp':
+        return <OtpVerificationPage onNavigate={handleNavigate} onVerify={handleLoginSuccess} userEmail={userEmail} userId={userId} />;
       default:
-        return <LandingPage onNavigate={setCurrentPage} />;
+        return <LandingPage onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <>
+    <div className="App">
+      <Toaster />
       {renderPage()}
-    </>
+    </div>
   );
-}
+};
 
 export default App;
