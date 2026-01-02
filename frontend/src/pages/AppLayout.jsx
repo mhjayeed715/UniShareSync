@@ -79,10 +79,10 @@ const AppLayout = ({ onLogout }) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Top Navbar */}
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8 z-10">
+        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8 z-10 flex-shrink-0">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden text-gray-500 hover:text-brand-blue"
@@ -122,7 +122,7 @@ const AppLayout = ({ onLogout }) => {
         </header>
 
         {/* Content Container */}
-        <main className="flex-1 overflow-y-auto bg-brand-light">
+        <main className="flex-1 overflow-y-auto bg-brand-light min-h-0">
           {renderContent()}
         </main>
       </div>
