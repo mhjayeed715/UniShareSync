@@ -1,61 +1,82 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Users, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const LoginPage = ({ onNavigate, onLogin }) => {
+const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError('');
+    const loadingToast = toast.loading('Logging in...');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        throw new Error('Server returned an invalid response. Please try again later.');
+      }
+      
+      toast.dismiss(loadingToast);
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Admin login: token is returned directly
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        toast.success(data.message || 'Admin login successful!');
+        onLoginSuccess();
+      } else { // Regular user: OTP flow
+        setUserEmail(email);
+        if (data.userId) {
+            setUserId(data.userId);
+        }
+        toast.success(data.message || 'OTP sent to your email');
+        onNavigate('otp');
+      }
+
+    } catch (err) {
+      toast.dismiss(loadingToast);
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
       setLoading(false);
-      onLogin(); // Trigger app entry
-    }, 1500);
+    }
   };
 
   return (
     <div className="min-h-screen flex bg-brand-light">
-      {/* Left Side - Visual */}
       <div className="hidden lg:flex w-1/2 bg-brand-blue p-12 flex-col justify-between relative overflow-hidden">
-    <div className="z-10">
-      {/* Logo and Brand Name */}
-      <div className="flex items-center gap-3 mb-8">
-        <img 
-          src="/unisharesync.png"
-          alt="UniShareSync Logo"
-          className="h-10 w-auto" 
-        />
-        <span className="text-2xl font-bold text-white">UniShareSync</span>
-      </div>
-
-          <h1 className="text-4xl font-bold text-white mb-6 leading-tight">
-            Welcome back to your <br/> digital campus.
+         <div className="z-10">
+          <img src="/unisharesync.png" alt="UniShareSync Logo" className="h-12 w-auto"/>
+          <h1 className="text-4xl font-bold text-white mt-8 leading-tight">
+            Connecting University Minds, <br/> One File at a Time.
           </h1>
-          <ul className="space-y-4 text-blue-100">
-            <li className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-brand-teal"></div>
-              Access shared course resources
-            </li>
-            <li className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-brand-teal"></div>
-              Track your projects and deadlines
-            </li>
-            <li className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-brand-teal"></div>
-              Stay updated with smart notifications
-            </li>
-          </ul>
+          <p className="text-gray-200 mt-4 max-w-lg">
+            Join a secure, unified platform for students and faculty to share and manage academic resources effortlessly.
+          </p>
         </div>
-        <div className="z-10 text-blue-200 text-sm">
-          © 2025 UniShareSync
+        <div className="z-10 text-sm text-gray-300">
+          © 2026 UniShareSync. All Rights Reserved.
         </div>
-        {/* Abstract Background Decoration */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-teal rounded-full mix-blend-multiply filter blur-3xl opacity-20 translate-y-1/2 -translate-x-1/2"></div>
+        {/* Background decorative elements */}
+        <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-white/10 rounded-full"></div>
+        <div className="absolute top-1/2 -left-36 w-96 h-96 border-4 border-white/20 rounded-full"></div>
       </div>
-
-      {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <button onClick={() => onNavigate('landing')} className="flex items-center text-sm text-brand-gray hover:text-brand-blue mb-8">
@@ -73,6 +94,8 @@ const LoginPage = ({ onNavigate, onLogin }) => {
                 <input 
                   type="email" 
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="yourname@university.ac.bd"
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-brand-teal transition-all outline-none"
                 />
@@ -84,13 +107,24 @@ const LoginPage = ({ onNavigate, onLogin }) => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-brand-teal transition-all outline-none"
+                  className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-brand-teal transition-all outline-none"
                 />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
             </div>
+
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
             <div className="flex items-center justify-between">
               <label className="flex items-center">
@@ -107,7 +141,7 @@ const LoginPage = ({ onNavigate, onLogin }) => {
                 loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-brand-blue hover:bg-blue-900 shadow-md hover:shadow-lg'
               }`}
             >
-              {loading ? 'Authenticating...' : 'Login'}
+              {loading ? 'Requesting OTP...' : 'Login'}
             </button>
           </form>
 

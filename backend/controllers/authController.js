@@ -15,6 +15,18 @@ exports.signup = async (req, res) => {
       return res.status(403).json({ message: 'Cannot register as admin' });
     }
 
+    // Validate email format
+    // Allow any email ending in .ac.bd
+    const emailRegex = /^[\w.-]+@[\w.-]+\.ac\.bd$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format. Please use a university email ending in .ac.bd' });
+    }
+
+    // Validate password length
+    if (!password || password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    }
+
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -45,18 +57,30 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // Generate 6-digit OTP
-    const otp = crypto.randomInt(100000, 999999).toString();
+    // If user is admin, bypass OTP and send token directly
+    if (user.role === 'admin') {
+      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      return res.json({
+        message: 'Admin login successful',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      });
+    }
 
-    // Save OTP
+    // For other users, proceed with OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
     await OTP.create({ userId: user._id, otp });
 
-    // Send OTP via email
     await sendEmail({
       email: user.email,
       subject: 'Your UniShareSync Login OTP',
@@ -68,6 +92,7 @@ exports.login = async (req, res) => {
       userId: user._id
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -84,14 +109,12 @@ exports.verifyOTP = async (req, res) => {
 
     const user = await User.findById(userId);
 
-    // Generate JWT
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Delete used OTP
     await otpRecord.deleteOne();
 
     res.json({
@@ -105,6 +128,34 @@ exports.verifyOTP = async (req, res) => {
       }
     });
   } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.resendOTP = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+    
+    await OTP.deleteMany({ userId: user._id });
+    
+    await OTP.create({ userId: user._id, otp });
+
+    await sendEmail({
+      email: user.email,
+      subject: 'Your UniShareSync Login OTP',
+      message: ` Your new login OTP is ${otp}. It is valid for 10 minutes.`
+    });
+
+    res.json({ message: 'New OTP sent to your email' });
+  } catch (error) {
+    console.error('Resend OTP error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
