@@ -3,17 +3,35 @@ import {
   LayoutDashboard, BookOpen, FolderKanban, Calendar, 
   MessageSquare, Bell, Search, Menu, X, LogOut, ChevronDown 
 } from 'lucide-react';
+import DashboardPage from './DashboardPage';
 
 const AppLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState('Dashboard');
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', active: true },
-    { icon: BookOpen, label: 'Course Resources', active: false },
-    { icon: FolderKanban, label: 'Projects', active: false },
-    { icon: Calendar, label: 'Scheduler', active: false },
-    { icon: MessageSquare, label: 'Lost & Found', active: false },
+    { icon: LayoutDashboard, label: 'Dashboard' },
+    { icon: BookOpen, label: 'Course Resources' },
+    { icon: FolderKanban, label: 'Projects' },
+    { icon: Calendar, label: 'Scheduler' },
+    { icon: MessageSquare, label: 'Lost & Found' },
   ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Dashboard':
+        return <DashboardPage />;
+      default:
+        return (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-brand-gray mb-2">{activeTab}</h2>
+              <p>This feature is coming soon!</p>
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-brand-light flex font-sans">
@@ -33,8 +51,12 @@ const AppLayout = ({ onLogout }) => {
           {menuItems.map((item, index) => (
             <button 
               key={index}
+              onClick={() => {
+                setActiveTab(item.label);
+                if (window.innerWidth < 1024) setSidebarOpen(false);
+              }}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                item.active 
+                activeTab === item.label
                   ? 'bg-brand-teal text-white shadow-md' 
                   : 'text-blue-100 hover:bg-blue-800'
               }`}
@@ -60,7 +82,7 @@ const AppLayout = ({ onLogout }) => {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {/* Top Navbar */}
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8">
+        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8 z-10">
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="lg:hidden text-gray-500 hover:text-brand-blue"
@@ -99,30 +121,9 @@ const AppLayout = ({ onLogout }) => {
           </div>
         </header>
 
-        {/* Dashboard Content Container */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          <div className="mb-6 flex justify-between items-center">
-            <div>
-               <h1 className="text-2xl font-bold text-brand-blue">Dashboard</h1>
-               <p className="text-brand-gray">Welcome back, here's what's happening today.</p>
-            </div>
-            <button className="bg-brand-blue text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-900 shadow-sm">
-              + Quick Action
-            </button>
-          </div>
-
-          {/* Placeholder Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-64 flex items-center justify-center text-gray-400">
-               Upcoming Classes Widget
-             </div>
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-64 flex items-center justify-center text-gray-400">
-               Recent Resources Widget
-             </div>
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 h-64 flex items-center justify-center text-gray-400">
-               Notifications Widget
-             </div>
-          </div>
+        {/* Content Container */}
+        <main className="flex-1 overflow-y-auto bg-brand-light">
+          {renderContent()}
         </main>
       </div>
     </div>
