@@ -4,6 +4,7 @@ import {
   MessageSquare, Bell, Search, Menu, X, LogOut, ChevronDown 
 } from 'lucide-react';
 import DashboardPage from './DashboardPage';
+import CourseResourcesPage from './CourseResourcesPage';
 
 const AppLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -21,6 +22,8 @@ const AppLayout = ({ onLogout }) => {
     switch (activeTab) {
       case 'Dashboard':
         return <DashboardPage />;
+      case 'Course Resources':
+        return <CourseResourcesPage />;
       default:
         return (
           <div className="flex items-center justify-center h-full text-gray-400">
