@@ -1,5 +1,5 @@
-const User = require('../models/user');
-const OTP = require('../models/otp');
+const prisma = require('../config/prisma');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
@@ -7,7 +7,7 @@ const sendEmail = require('../utils/sendEmail');
 // @desc    Register new user
 // @route   POST /api/auth/signup
 exports.signup = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password, role, designation, department } = req.body;
 
   try {
     // Prevent public admin signup
@@ -27,25 +27,36 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: 'Password must be at least 8 characters long' });
     }
 
-    const userExists = await User.findOne({ email });
+    const userExists = await prisma.user.findUnique({ where: { email } });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'student'  // default to student if not provided
+    if (role === 'faculty' && (!designation || !designation.trim())) {
+      return res.status(400).json({ message: 'Designation is required for faculty signup' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: (role || 'student').toUpperCase(),  
+        designation: designation?.trim(),
+        department: department?.trim()
+      }
     });
 
     res.status(201).json({
       message: 'User registered successfully',
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        designation: user.designation
       }
     });
   } catch (error) {
@@ -57,19 +68,25 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.matchPassword(password))) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
-    // If user is admin, bypass OTP and send token directly
-    if (user.role === 'admin') {
-      const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // Bypass OTP for admin and test accounts
+    const testEmails = ['student@test.com', 'faculty@test.com'];
+    if (user.role === 'ADMIN' || testEmails.includes(user.email)) {
+      const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
       return res.json({
-        message: 'Admin login successful',
+        message: `${user.role === 'ADMIN' ? 'Admin' : 'Test account'} login successful`,
         token,
         user: {
-          id: user._id,
+          id: user.id,
           name: user.name,
           email: user.email,
           role: user.role
@@ -79,7 +96,12 @@ exports.login = async (req, res) => {
 
     // For other users, proceed with OTP
     const otp = crypto.randomInt(100000, 999999).toString();
-    await OTP.create({ userId: user._id, otp });
+    await prisma.oTP.create({
+      data: {
+        userId: user.id,
+        otp
+      }
+    });
 
     await sendEmail({
       email: user.email,
@@ -89,7 +111,7 @@ exports.login = async (req, res) => {
 
     res.json({
       message: 'OTP sent to your email',
-      userId: user._id
+      userId: user.id
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -102,26 +124,29 @@ exports.verifyOTP = async (req, res) => {
   const { userId, otp } = req.body;
 
   try {
-    const otpRecord = await OTP.findOne({ userId, otp });
+    const otpRecord = await prisma.oTP.findFirst({
+      where: { userId, otp }
+    });
+
     if (!otpRecord) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    const user = await User.findById(userId);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: user.id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    await otpRecord.deleteOne();
+    await prisma.oTP.delete({ where: { id: otpRecord.id } });
 
     res.json({
       message: 'Login successful',
       token,
       user: {
-        id: user._id,
+        id: user.id,
         name: user.name,
         email: user.email,
         role: user.role
@@ -136,16 +161,21 @@ exports.resendOTP = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
     
-    await OTP.deleteMany({ userId: user._id });
+    await prisma.oTP.deleteMany({ where: { userId: user.id } });
     
-    await OTP.create({ userId: user._id, otp });
+    await prisma.oTP.create({
+      data: {
+        userId: user.id,
+        otp
+      }
+    });
 
     await sendEmail({
       email: user.email,

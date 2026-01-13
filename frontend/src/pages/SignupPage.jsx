@@ -1,16 +1,36 @@
-import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Lock, User, ArrowLeft, Eye, EyeOff, Building2 } from 'lucide-react';
 
 const SignupPage = ({ onNavigate, setUserEmail, setUserId }) => {
   const [role, setRole] = useState('student');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [designation, setDesignation] = useState('');
+  const [department, setDepartment] = useState('');
+  const [departments, setDepartments] = useState([]);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/departments');
+      const data = await res.json();
+      console.log('Departments fetched:', data);
+      if (data.success) {
+        setDepartments(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,11 +43,17 @@ const SignupPage = ({ onNavigate, setUserEmail, setUserId }) => {
       return;
     }
 
+    if (role === 'faculty' && !designation.trim()) {
+      setError('Designation is required for faculty signup');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, designation: designation.trim(), department: department.trim() }),
       });
 
       let data;
@@ -102,6 +128,40 @@ const SignupPage = ({ onNavigate, setUserEmail, setUserId }) => {
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal outline-none" placeholder="yourname@university.ac.bd" />
               </div>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-brand-dark mb-1">Department</label>
+              <div className="relative">
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal outline-none appearance-none bg-white"
+                  required
+                >
+                  <option value="">Select Department</option>
+                  {departments.map((dept) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {role === 'faculty' && (
+              <div>
+                <label className="block text-sm font-medium text-brand-dark mb-1">Designation</label>
+                <input
+                  type="text"
+                  required
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal outline-none"
+                  placeholder="Assistant Professor, Department of CSE"
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
                <div>

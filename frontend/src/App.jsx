@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import OtpVerificationPage from './pages/OtpVerificationPage';
 import AppLayout from './pages/AppLayout';
+import AdminDashboard from './pages/AdminDashboard';
 
 const App = () => {
   const [page, setPage] = useState('landing');
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    // Check if user is already authenticated
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setIsAuthenticated(true);
+      setUserRole(JSON.parse(user).role);
+    }
+  }, []);
 
   const handleNavigate = (newPage) => {
     setPage(newPage);
@@ -18,15 +30,26 @@ const App = () => {
   
   const handleLoginSuccess = () => {
     setIsAuthenticated(true);
+    const user = localStorage.getItem('user');
+    if (user) {
+      setUserRole(JSON.parse(user).role);
+    }
   }
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
-    setPage('login');
+    setUserRole(null);
+    setPage('landing');
   }
 
   const renderPage = () => {
     if (isAuthenticated) {
+      // Show AdminDashboard for admin users, AppLayout for regular users
+      if (userRole === 'ADMIN') {
+        return <AdminDashboard />;
+      }
       return <AppLayout onLogout={handleLogout} />;
     }
 

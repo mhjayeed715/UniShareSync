@@ -3,7 +3,7 @@ import {
   LayoutDashboard, BookOpen, FolderKanban, Calendar, 
   MessageSquare, Bell, Search, Menu, X, LogOut, ChevronDown 
 } from 'lucide-react';
-import DashboardPage from './DashboardPage';
+import Dashboard from './Dashboard';
 import CourseResourcesPage from './CourseResourcesPage';
 
 const AppLayout = ({ onLogout }) => {
@@ -21,7 +21,7 @@ const AppLayout = ({ onLogout }) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <DashboardPage />;
+        return <Dashboard />;
       case 'Course Resources':
         return <CourseResourcesPage />;
       default:
