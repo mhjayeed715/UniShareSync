@@ -1,8 +1,27 @@
-import React from 'react';
-import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle, Bell } from 'lucide-react';
 import { Hero } from '../components/ui/animated-hero';
 
 const LandingPage = ({ onNavigate }) => {
+  const [notices, setNotices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchNotices();
+  }, []);
+
+  const fetchNotices = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/notices/public');
+      const data = await response.json();
+      setNotices(data.notices || []);
+    } catch (error) {
+      console.error('Error fetching notices:', error);
+      setNotices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-white font-sans text-brand-dark">
       {/* Navigation */}
@@ -46,17 +65,55 @@ const LandingPage = ({ onNavigate }) => {
       {/* Hero Section */}
       <Hero onNavigate={onNavigate} />
 
-      <div className="bg-brand-light pb-20">
+      {/* Campus Notices Section */}
+      <div className="bg-brand-light py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative mx-auto max-w-5xl">
-            <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-2 md:p-4">
-              <div className="bg-gray-50 rounded-xl overflow-hidden aspect-[16/9] flex items-center justify-center border border-gray-100">
-                <div className="text-center text-gray-400">
-                  <div className="mb-2">Dashboard Interface Preview</div>
-                  <div className="text-sm">Includes Scheduler, Resources, and Notifications</div>
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-brand-blue/10 px-4 py-2 rounded-full mb-4">
+              <Bell className="w-5 h-5 text-brand-blue" />
+              <span className="text-brand-blue font-semibold">Campus Notices</span>
+            </div>
+            <h2 className="text-3xl font-bold text-brand-blue mb-2">Stay Updated</h2>
+            <p className="text-brand-gray">Latest announcements from administration</p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            {loading ? (
+              <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+                <div className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
                 </div>
               </div>
-            </div>
+            ) : notices.length > 0 ? (
+              <div className="space-y-4">
+                {notices.slice(0, 3).map((notice) => (
+                  <div key={notice.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-brand-blue/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Bell className="w-6 h-6 text-brand-blue" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-brand-blue mb-2">{notice.title}</h3>
+                        <p className="text-brand-gray mb-3">{notice.content}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span>{new Date(notice.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                          {notice.priority === 'HIGH' && (
+                            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium">Important</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-gray-200">
+                <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">No notices yet</h3>
+                <p className="text-gray-500">Check back later for campus announcements</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

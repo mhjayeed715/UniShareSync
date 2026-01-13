@@ -35,9 +35,10 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Admin login: token is returned directly
-      if (data.token) {
+      // Admin login: token and user are returned directly
+      if (data.token && data.user) {
         localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         toast.success(data.message || 'Admin login successful!');
         onLoginSuccess();
       } else { // Regular user: OTP flow
