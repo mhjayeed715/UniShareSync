@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        Role     @default(STUDENT)
+  designation String?
+  department  String?
+  phone       String?
+  bio         String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  otps             OTP[]
+  notices          Notice[]
+  resources        Resource[]
+  projects         Project[]          @relation("ProjectCreator")
+  projectMembers   ProjectMember[]
+  events           Event[]
+  eventRegistrations EventRegistration[]
+  feedback         Feedback[]
+  lostFoundItems   LostFoundItem[]
+  clubMembers      ClubMember[]
+
+  @@map("users")
+}
+
+enum Role {
+  STUDENT
+  FACULTY
+  ADMIN
+}
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String
+  otp       String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("otps")
+}
+
+model Notice {
+  id        String         @id @default(uuid())
+  title     String
+  content   String         @db.Text
+  priority  NoticePriority @default(NORMAL)
+  createdBy String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  author    User           @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@map("notices")
+}
+
+enum NoticePriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  code        String   @unique
+  description String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  courses     Course[]
+
+  @@map("departments")
+}
+
+model Course {
+  id           String      @id @default(uuid())
+  courseCode   String      @unique
+  courseName   String
+  departmentId String?
+  semester     Int?
+  creditHours  Float?
+  courseType   String      @default("theory")
+  description  String?     @db.Text
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+
+  department   Department? @relation(fields: [departmentId], references: [id])
+  resources    Resource[]
+
+  @@map("courses")
+}
+
+model Resource {
+  id          String    @id @default(uuid())
+  title       String
+  description String?   @db.Text
+  courseId    String?
+  courseName  String?
+  subject     String?
+  resourceType String   @default("notes")
+  filePath    String
+  fileName    String?
+  fileSize    Int?
+  fileType    String?
+  uploadedBy  String
+  isApproved  Boolean   @default(false)
+  isDeleted   Boolean   @default(false)
+  views       Int       @default(0)
+  downloads   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  course      Course?   @relation(fields: [courseId], references: [id])
+  uploader    User      @relation(fields: [uploadedBy], references: [id])
+
+  @@map("resources")
+}
+
+model Project {
+  id                 String         @id @default(uuid())
+  title              String
+  description        String?        @db.Text
+  courseId           String?
+  createdBy          String
+  projectType        String         @default("group")
+  startDate          DateTime?
+  endDate            DateTime?
+  submissionDeadline DateTime?
+  status             String         @default("active")
+  isPublic           Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  creator            User           @relation("ProjectCreator", fields: [createdBy], references: [id])
+  members            ProjectMember[]
+
+  @@map("projects")
+}
+
+model ProjectMember {
+  id         String   @id @default(uuid())
+  projectId  String
+  userId     String
+  role       String   @default("member")
+  joinedDate DateTime @default(now())
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([projectId, userId])
+  @@map("project_members")
+}
+
+model Event {
+  id                    String              @id @default(uuid())
+  title                 String
+  description           String?             @db.Text
+  clubId                String?
+  eventDate             DateTime
+  startTime             String?
+  endTime               String?
+  location              String?
+  maxCapacity           Int?
+  currentRegistrations  Int                 @default(0)
+  imageUrl              String?
+  status                String              @default("upcoming")
+  createdBy             String
+  createdAt             DateTime            @default(now())
+
+  creator               User                @relation(fields: [createdBy], references: [id])
+  club                  Club?               @relation(fields: [clubId], references: [id])
+  registrations         EventRegistration[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id               String   @id @default(uuid())
+  eventId          String
+  userId           String
+  registrationDate DateTime @default(now())
+  status           String   @default("registered")
+
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user             User     @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+  @@map("event_registrations")
+}
+
+model Club {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?      @db.Text
+  logoUrl     String?
+  founderId   String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+
+  members     ClubMember[]
+  events      Event[]
+
+  @@map("clubs")
+}
+
+model ClubMember {
+  id         String   @id @default(uuid())
+  clubId     String
+  userId     String
+  role       String   @default("member")
+  joinedDate DateTime @default(now())
+
+  club       Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([clubId, userId])
+  @@map("club_members")
+}
+
+model Feedback {
+  id           String    @id @default(uuid())
+  title        String
+  message      String    @db.Text
+  category     String    @default("general")
+  submittedBy  String?
+  isAnonymous  Boolean   @default(true)
+  status       String    @default("submitted")
+  adminResponse String?  @db.Text
+  respondedBy  String?
+  responseDate DateTime?
+  isPublic     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  submitter    User?     @relation(fields: [submittedBy], references: [id])
+
+  @@map("feedback")
+}
+
+model LostFoundItem {
+  id               String    @id @default(uuid())
+  title            String
+  description      String?   @db.Text
+  category         String?
+  itemType         String?
+  color            String?
+  imageUrl         String?
+  lastSeenLocation String?
+  lastSeenDate     DateTime?
+  status           String    @default("active")
+  itemStatus       String    @default("open")
+  postedBy         String?
+  contactName      String?
+  contactPhone     String?
+  contactEmail     String?
+  isAnonymous      Boolean   @default(false)
+  resolved         Boolean   @default(false)
+  resolvedDate     DateTime?
+  resolutionNotes  String?   @db.Text
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  poster           User?     @relation(fields: [postedBy], references: [id])
+
+  @@map("lost_found_items")
+}

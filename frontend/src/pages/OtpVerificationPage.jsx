@@ -71,6 +71,9 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
       }
 
       localStorage.setItem('token', data.token);
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
       toast.success('Login successful!');
       onVerify();
 

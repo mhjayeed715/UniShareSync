@@ -1,0 +1,126 @@
+const prisma = require('../config/prisma');
+
+// Get all public notices (for landing page)
+exports.getPublicNotices = async (req, res) => {
+  try {
+    const notices = await prisma.notice.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      include: {
+        author: {
+          select: {
+            name: true,
+            role: true
+          }
+        }
+      }
+    });
+
+    res.json({ notices });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get all notices (authenticated)
+exports.getAllNotices = async (req, res) => {
+  try {
+    const notices = await prisma.notice.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        author: {
+          select: {
+            name: true,
+            role: true
+          }
+        }
+      }
+    });
+
+    res.json({ notices });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Create notice (admin only)
+exports.createNotice = async (req, res) => {
+  const { title, content, priority } = req.body;
+
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can create notices' });
+    }
+
+    const notice = await prisma.notice.create({
+      data: {
+        title,
+        content,
+        priority: priority || 'NORMAL',
+        createdBy: req.user.id
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            role: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({ message: 'Notice created successfully', notice });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Update notice (admin only)
+exports.updateNotice = async (req, res) => {
+  const { id } = req.params;
+  const { title, content, priority } = req.body;
+
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can update notices' });
+    }
+
+    const notice = await prisma.notice.update({
+      where: { id },
+      data: {
+        title,
+        content,
+        priority
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            role: true
+          }
+        }
+      }
+    });
+
+    res.json({ message: 'Notice updated successfully', notice });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Delete notice (admin only)
+exports.deleteNotice = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can delete notices' });
+    }
+
+    await prisma.notice.delete({ where: { id } });
+
+    res.json({ message: 'Notice deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
