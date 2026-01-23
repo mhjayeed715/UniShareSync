@@ -1,4 +1,6 @@
 const prisma = require('../config/prisma');
+const { createNotification } = require('./notificationController');
+const { notifyStudents, NotificationTypes } = require('../utils/notificationHelper');
 
 // Get all resources (admin)
 exports.getAllResources = async (req, res) => {
@@ -53,8 +55,23 @@ exports.approveResource = async (req, res) => {
     const resource = await prisma.resource.update({
       where: { id },
       data: { isApproved: true },
-      include: { uploader: { select: { name: true } } }
+      include: { uploader: { select: { id: true, name: true } } }
     });
+
+    // Notify uploader
+    await createNotification(
+      resource.uploadedBy,
+      'Resource Approved',
+      `Your resource "${resource.title}" has been approved and is now available to all students.`,
+      NotificationTypes.SUCCESS
+    );
+
+    // Notify all students
+    await notifyStudents(
+      'New Resource Available',
+      `New ${resource.resourceType} "${resource.title}" is now available for ${resource.courseName || 'your course'}.`,
+      NotificationTypes.INFO
+    );
 
     res.json({ success: true, data: resource, message: 'Resource approved successfully' });
   } catch (error) {
@@ -73,10 +90,25 @@ exports.bulkAction = async (req, res) => {
 
     let result;
     if (action === 'approve') {
+      const resources = await prisma.resource.findMany({
+        where: { id: { in: resourceIds } },
+        select: { uploadedBy: true, title: true }
+      });
+      
       result = await prisma.resource.updateMany({
         where: { id: { in: resourceIds } },
         data: { isApproved: true }
       });
+
+      // Notify uploaders
+      for (const resource of resources) {
+        await createNotification(
+          resource.uploadedBy,
+          'Resource Approved',
+          `Your resource "${resource.title}" has been approved.`,
+          'success'
+        );
+      }
     } else if (action === 'delete') {
       result = await prisma.resource.updateMany({
         where: { id: { in: resourceIds } },

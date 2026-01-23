@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const fs = require('fs');
 const path = require('path');
+const { notifyAdmins, createNotification, NotificationTypes } = require('../utils/notificationHelper');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/feedback');
@@ -193,7 +194,7 @@ exports.createFeedback = async (req, res) => {
         submittedBy: isAnonymous === 'true' ? null : userId,
         isAnonymous: isAnonymous === 'true',
         status: 'submitted',
-        isPublic: true // Make feedback public by default
+        isPublic: true
       },
       include: {
         submitter: {
@@ -205,6 +206,13 @@ exports.createFeedback = async (req, res) => {
         }
       }
     });
+
+    // Auto-notify admins
+    await notifyAdmins(
+      'New Feedback Submitted',
+      `${title} - ${category}`,
+      NotificationTypes.INFO
+    );
 
     // Transform data
     const transformedFeedback = {
@@ -309,6 +317,16 @@ exports.respondToFeedback = async (req, res) => {
         status: 'responded'
       }
     });
+
+    // Notify feedback submitter
+    if (feedback.submittedBy) {
+      await createNotification(
+        feedback.submittedBy,
+        'Feedback Response',
+        'Admin has responded to your feedback',
+        NotificationTypes.SUCCESS
+      );
+    }
 
     res.json({ 
       message: 'Response sent successfully', 
