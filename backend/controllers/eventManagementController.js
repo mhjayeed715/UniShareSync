@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { notifyAll, NotificationTypes } = require('../utils/notificationHelper');
 
 // Get all events
 exports.getAllEvents = async (req, res) => {
@@ -89,6 +90,14 @@ exports.createEvent = async (req, res) => {
         club: { select: { name: true } }
       }
     });
+
+    // Notify all users about new event
+    await notifyAll(
+      'New Event',
+      `${title} on ${new Date(eventDate).toLocaleDateString()}. Register now!`,
+      NotificationTypes.INFO,
+      `/events/${event.id}`
+    );
 
     res.status(201).json({ success: true, data: event, message: 'Event created successfully' });
   } catch (error) {

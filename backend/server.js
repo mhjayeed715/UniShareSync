@@ -18,6 +18,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const lostFoundRoutes = require('./routes/lostFoundRoutes');
 const feedbackRoutes = require('./routes/feedbackRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 
@@ -90,6 +91,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/lost-found', lostFoundRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {
