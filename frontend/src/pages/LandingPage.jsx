@@ -96,6 +96,13 @@ const LandingPage = ({ onNavigate }) => {
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-brand-blue mb-2">{notice.title}</h3>
                         <p className="text-brand-gray mb-3">{notice.content}</p>
+                        {notice.imageUrl && (
+                          <img 
+                            src={`http://localhost:5000${notice.imageUrl}`} 
+                            alt={notice.title} 
+                            className="rounded-lg max-h-48 object-cover mb-3"
+                          />
+                        )}
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span>{new Date(notice.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                           {notice.priority === 'HIGH' && (

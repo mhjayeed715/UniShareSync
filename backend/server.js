@@ -11,6 +11,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const adminManagementRoutes = require('./routes/adminManagementRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const resourceRoutes = require('./routes/resourceRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin/manage', adminManagementRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/resources', resourceRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Basic route for testing
 app.get('/', (req, res) => {

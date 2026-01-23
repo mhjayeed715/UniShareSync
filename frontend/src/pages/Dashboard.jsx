@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Users, Calendar, MessageSquare, 
   ArrowUpRight, Clock, FileText, AlertCircle 
@@ -6,46 +6,60 @@ import {
 
 const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [stats, setStats] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
-    { label: 'Total Resources', value: '124', icon: BookOpen, color: 'bg-blue-500' },
-    { label: 'Active Projects', value: '3', icon: Users, color: 'bg-teal-500' },
-    { label: 'Upcoming Events', value: '5', icon: Calendar, color: 'bg-purple-500' },
-    { label: 'Unread Notices', value: '2', icon: MessageSquare, color: 'bg-orange-500' },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const recentActivities = [
-    { 
-      id: 1, 
-      user: 'Md Akram Hossain', 
-      action: 'uploaded a new resource', 
-      target: 'Advanced Algorithms Notes', 
-      time: '2 hours ago',
-      icon: FileText,
-      iconColor: 'text-blue-500',
-      bg: 'bg-blue-50'
-    },
-    { 
-      id: 2, 
-      user: 'CSE 3311 Group', 
-      action: 'updated project status', 
-      target: 'AI Chatbot Implementation', 
-      time: '4 hours ago',
-      icon: Users,
-      iconColor: 'text-teal-500',
-      bg: 'bg-teal-50'
-    },
-    { 
-      id: 3, 
-      user: 'Admin', 
-      action: 'posted an announcement', 
-      target: 'Mid-term Exam Schedule', 
-      time: '1 day ago',
-      icon: AlertCircle,
-      iconColor: 'text-orange-500',
-      bg: 'bg-orange-50'
-    },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      const [statsRes, activitiesRes] = await Promise.all([
+        fetch('http://localhost:5000/api/dashboard/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:5000/api/dashboard/activities', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
+
+      const statsData = await statsRes.json();
+      const activitiesData = await activitiesRes.json();
+
+      if (statsData.success) {
+        setStats(statsData.stats);
+      }
+      if (activitiesData.success) {
+        setActivities(activitiesData.activities);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getIconForStat = (label) => {
+    if (label.includes('Resources')) return { icon: BookOpen, color: 'bg-blue-500' };
+    if (label.includes('Projects') || label.includes('Uploads')) return { icon: Users, color: 'bg-teal-500' };
+    if (label.includes('Events')) return { icon: Calendar, color: 'bg-purple-500' };
+    if (label.includes('Notices') || label.includes('Students')) return { icon: MessageSquare, color: 'bg-orange-500' };
+    return { icon: FileText, color: 'bg-blue-500' };
+  };
+
+  const getActivityIcon = (type) => {
+    switch(type) {
+      case 'resource': return { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50' };
+      case 'project': return { icon: Users, color: 'text-teal-500', bg: 'bg-teal-50' };
+      case 'event': return { icon: Calendar, color: 'text-purple-500', bg: 'bg-purple-50' };
+      default: return { icon: AlertCircle, color: 'text-orange-500', bg: 'bg-orange-50' };
+    }
+  };
 
   const upcomingClasses = [
     { subject: 'Software Engineering', code: 'CSE 3297', time: '10:00 AM - 11:20 AM', room: 'Room 1501' },
@@ -74,20 +88,29 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg ${stat.color} bg-opacity-10`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color.replace('bg-', 'text-')}`} />
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-brand-teal border-t-transparent"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats && Object.entries(stats).map(([key, data]) => {
+              const { icon: Icon, color } = getIconForStat(data.label);
+              return (
+                <div key={key} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg ${color} bg-opacity-10`}>
+                      <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">This Semester</span>
+                  </div>
+                  <h3 className="text-3xl font-bold text-brand-dark mb-1">{data.value}</h3>
+                  <p className="text-sm text-brand-gray">{data.label}</p>
                 </div>
-                <span className="text-xs font-medium text-gray-400 bg-gray-50 px-2 py-1 rounded-full">This Semester</span>
-              </div>
-              <h3 className="text-3xl font-bold text-brand-dark mb-1">{stat.value}</h3>
-              <p className="text-sm text-brand-gray">{stat.label}</p>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Activity Feed */}
@@ -97,21 +120,28 @@ const Dashboard = () => {
               <button className="text-sm text-brand-teal font-medium hover:underline">View All</button>
             </div>
             <div className="space-y-6">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${activity.bg}`}>
-                    <activity.icon className={`w-5 h-5 ${activity.iconColor}`} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-brand-dark">
-                      <span className="font-semibold">{activity.user}</span> {activity.action} <span className="font-medium text-brand-blue">"{activity.target}"</span>
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {activities.length === 0 ? (
+                <p className="text-center text-gray-500 py-4">No recent activities</p>
+              ) : (
+                activities.map((activity) => {
+                  const { icon: Icon, color: iconColor, bg } = getActivityIcon(activity.type);
+                  return (
+                    <div key={activity.id} className="flex gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${bg}`}>
+                        <Icon className={`w-5 h-5 ${iconColor}`} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-brand-dark">
+                          <span className="font-semibold">{activity.user}</span> {activity.action} <span className="font-medium text-brand-blue">"{activity.target}"</span>
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> {activity.time}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
