@@ -68,6 +68,8 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    console.log('Login attempt:', email);
+    
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -77,6 +79,8 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    console.log('User authenticated:', user.role);
 
     // Bypass OTP for admin and test accounts
     const testEmails = ['student@test.com', 'faculty@test.com'];
@@ -94,6 +98,7 @@ exports.login = async (req, res) => {
       });
     }
 
+    console.log('Generating OTP...');
     // For other users, proceed with OTP
     const otp = crypto.randomInt(100000, 999999).toString();
     await prisma.oTP.create({
@@ -103,11 +108,18 @@ exports.login = async (req, res) => {
       }
     });
 
-    await sendEmail({
-      email: user.email,
-      subject: 'Your UniShareSync Login OTP',
-      message: `Your login OTP is ${otp}. It is valid for 10 minutes.`
-    });
+    console.log('Sending email...');
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Your UniShareSync Login OTP',
+        message: `Your login OTP is ${otp}. It is valid for 10 minutes.`
+      });
+      console.log('Email sent successfully');
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    }
 
     res.json({
       message: 'OTP sent to your email',
@@ -177,11 +189,16 @@ exports.resendOTP = async (req, res) => {
       }
     });
 
-    await sendEmail({
-      email: user.email,
-      subject: 'Your UniShareSync Login OTP',
-      message: ` Your new login OTP is ${otp}. It is valid for 10 minutes.`
-    });
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Your UniShareSync Login OTP',
+        message: ` Your new login OTP is ${otp}. It is valid for 10 minutes.`
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
+    }
 
     res.json({ message: 'New OTP sent to your email' });
   } catch (error) {
