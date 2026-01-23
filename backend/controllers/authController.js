@@ -70,6 +70,9 @@ exports.login = async (req, res) => {
   try {
     console.log('Login attempt:', email);
     
+    // Test database connection first
+    await prisma.$queryRaw`SELECT 1`;
+    
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -127,6 +130,9 @@ exports.login = async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    if (error.code === 'ECONNREFUSED' || error.message.includes('connect')) {
+      return res.status(503).json({ message: 'Database connection failed. Please ensure PostgreSQL is running.' });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
