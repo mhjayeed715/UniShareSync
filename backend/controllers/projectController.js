@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { notifyAll, NotificationTypes } = require('../utils/notificationHelper');
 
 // Get all projects (browse)
 exports.getAllProjects = async (req, res) => {
@@ -253,6 +254,13 @@ exports.createProject = async (req, res) => {
         role: 'creator'
       }
     });
+
+    // Auto-notify all users
+    await notifyAll(
+      'New Project',
+      `${title} - Join now!`,
+      NotificationTypes.INFO
+    );
 
     // Fetch project with members
     const projectWithMembers = await prisma.project.findUnique({

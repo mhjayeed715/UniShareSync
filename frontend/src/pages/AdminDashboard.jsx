@@ -9,6 +9,7 @@ import ClubEventManager from '../components/Admin/ClubEventManager';
 import ProjectManagement from '../components/Admin/ProjectManagement';
 import LostFoundManagement from '../components/Admin/LostFoundManagement';
 import FeedbackManagement from '../components/Admin/FeedbackManagement';
+import NotificationManager from '../components/Admin/NotificationManager';
 import api from '../api';
 
 const AdminDashboard = () => {
@@ -121,6 +122,7 @@ const AdminDashboard = () => {
     { id: 'users', icon: Users, label: 'User Management' },
     { id: 'resources', icon: BookOpen, label: 'Resource Management' },
     { id: 'notices', icon: Megaphone, label: 'Notice Board' },
+    { id: 'notifications', icon: Bell, label: 'Send Notifications' },
     { id: 'scheduler', icon: CalendarClock, label: 'Routine & Scheduler' },
     { id: 'events', icon: Calendar, label: 'Event Management' },
     { id: 'projects', icon: FolderKanban, label: 'Project Oversight' },
@@ -133,6 +135,7 @@ const AdminDashboard = () => {
     if (activeSection === 'users') return <UserManagement />;
     if (activeSection === 'resources') return <ResourceManagement />;
     if (activeSection === 'notices') return <NoticeManager />;
+    if (activeSection === 'notifications') return <NotificationManager />;
     if (activeSection === 'scheduler') return <AdminRoutineManager />;
     if (activeSection === 'events') return <ClubEventManager />;
     if (activeSection === 'projects') return <ProjectManagement />;

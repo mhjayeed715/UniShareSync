@@ -2,6 +2,8 @@ const prisma = require('../config/prisma');
 const path = require('path');
 const fs = require('fs');
 const { getCoursesBySemester, matchCourseCode, getSemesterFromCourse } = require('../utils/routineParser');
+const { createNotification } = require('./notificationController');
+const { notifyStudents, notifyAdmins, NotificationTypes } = require('../utils/notificationHelper');
 
 // Upload a new resource
 exports.uploadResource = async (req, res) => {
@@ -61,6 +63,21 @@ exports.uploadResource = async (req, res) => {
     });
 
     console.log('Resource created successfully:', resource.id);
+
+    // Send notifications
+    if (req.user.role === 'STUDENT') {
+      await notifyAdmins(
+        'New Resource Pending Approval',
+        `${req.user.name} uploaded "${title}" for ${courseName}`,
+        NotificationTypes.INFO
+      );
+    } else {
+      await notifyStudents(
+        'New Resource Available',
+        `New ${type || 'resource'} "${title}" added for ${courseName}`,
+        NotificationTypes.SUCCESS
+      );
+    }
 
     res.status(201).json({
       success: true,

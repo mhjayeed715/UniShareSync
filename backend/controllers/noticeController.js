@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { notifyAll, NotificationTypes } = require('../utils/notificationHelper');
 
 // Get all public notices (for landing page)
 exports.getPublicNotices = async (req, res) => {
@@ -82,6 +83,14 @@ exports.createNotice = async (req, res) => {
         }
       }
     });
+
+    // Auto-notify all users
+    const notifType = priority === 'HIGH' ? NotificationTypes.WARNING : NotificationTypes.INFO;
+    await notifyAll(
+      title,
+      content.substring(0, 100) + (content.length > 100 ? '...' : ''),
+      notifType
+    );
 
     res.status(201).json({ message: 'Notice created successfully', notice });
   } catch (error) {

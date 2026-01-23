@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const fs = require('fs');
 const path = require('path');
+const { notifyAdmins, NotificationTypes } = require('../utils/notificationHelper');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads/lost-found');
@@ -167,6 +168,13 @@ exports.createItem = async (req, res) => {
         }
       }
     });
+
+    // Auto-notify admins
+    await notifyAdmins(
+      `${type === 'lost' ? 'Lost' : 'Found'} Item Reported`,
+      `${title} - ${location}`,
+      NotificationTypes.INFO
+    );
 
     // Transform data
     const transformedItem = {
