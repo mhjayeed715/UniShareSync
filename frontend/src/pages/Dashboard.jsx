@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Users, Calendar, MessageSquare, 
-  ArrowUpRight, Clock, FileText, AlertCircle 
+  Clock, FileText, AlertCircle, Bell, X, Maximize2 
 } from 'lucide-react';
 
 const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [stats, setStats] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [previewNotice, setPreviewNotice] = useState(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -19,23 +21,32 @@ const Dashboard = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const [statsRes, activitiesRes] = await Promise.all([
+      const [statsRes, activitiesRes, noticesRes] = await Promise.all([
         fetch('http://localhost:5000/api/dashboard/stats', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('http://localhost:5000/api/dashboard/activities', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch('http://localhost:5000/api/notices', {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
 
       const statsData = await statsRes.json();
       const activitiesData = await activitiesRes.json();
+      const noticesData = await noticesRes.json();
+
+      console.log('Notices data:', noticesData);
 
       if (statsData.success) {
         setStats(statsData.stats);
       }
       if (activitiesData.success) {
         setActivities(activitiesData.activities);
+      }
+      if (noticesData.success || noticesData.notices) {
+        setNotices(noticesData.notices || []);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -61,30 +72,22 @@ const Dashboard = () => {
     }
   };
 
-  const upcomingClasses = [
-    { subject: 'Software Engineering', code: 'CSE 3297', time: '10:00 AM - 11:20 AM', room: 'Room 1501' },
-    { subject: 'Database Management Systems', code: 'CSE 3170', time: '12:00 PM - 01:20 PM', room: 'Room 1504' },
-    { subject: 'Web Programming', code: 'CSE 3313', time: '02:00 PM - 03:30 PM', room: 'Room 1503' },
-  ];
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'HIGH': return 'bg-red-100 text-red-700';
+      case 'NORMAL': return 'bg-blue-100 text-blue-700';
+      case 'LOW': return 'bg-gray-100 text-gray-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
 
   return (
     <div className="p-6">
       <div className="space-y-8">
         {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-dark">Welcome back, {user.name}! 👋</h1>
-            <p className="text-brand-gray">Here's what's happening in your academic circle today.</p>
-          </div>
-          <div className="flex gap-3">
-            <button className="px-4 py-2 bg-white border border-gray-200 text-brand-dark rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors">
-              View Schedule
-            </button>
-            <button className="px-4 py-2 bg-brand-teal text-white rounded-lg hover:bg-teal-600 font-medium text-sm shadow-sm hover:shadow transition-all flex items-center gap-2">
-              <ArrowUpRight className="w-4 h-4" />
-              Quick Upload
-            </button>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-brand-dark">Welcome back, {user.name}! 👋</h1>
+          <p className="text-brand-gray">Here's what's happening in your academic circle today.</p>
         </div>
 
         {/* Stats Grid */}
@@ -112,70 +115,191 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Activity Feed */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-brand-dark">Recent Activity</h2>
-              <button className="text-sm text-brand-teal font-medium hover:underline">View All</button>
+        {/* Campus Notices Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-brand-blue/10 rounded-xl flex items-center justify-center">
+              <Bell className="w-5 h-5 text-brand-blue" />
             </div>
-            <div className="space-y-6">
-              {activities.length === 0 ? (
-                <p className="text-center text-gray-500 py-4">No recent activities</p>
-              ) : (
-                activities.map((activity) => {
-                  const { icon: Icon, color: iconColor, bg } = getActivityIcon(activity.type);
-                  return (
-                    <div key={activity.id} className="flex gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${bg}`}>
-                        <Icon className={`w-5 h-5 ${iconColor}`} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-brand-dark">
-                          <span className="font-semibold">{activity.user}</span> {activity.action} <span className="font-medium text-brand-blue">"{activity.target}"</span>
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {activity.time}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+            <div>
+              <h2 className="text-xl font-bold text-brand-blue">Campus Notices</h2>
+              <p className="text-sm text-brand-gray">Latest announcements from administration</p>
             </div>
           </div>
 
-          {/* Today's Schedule */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-brand-dark">Today's Schedule</h2>
-              <span className="text-xs font-medium text-brand-blue bg-blue-50 px-2 py-1 rounded-full">
-                {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </span>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-pulse space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+              </div>
             </div>
+          ) : notices.length > 0 ? (
             <div className="space-y-4">
-              {upcomingClasses.map((cls, idx) => (
-                <div key={idx} className="p-4 rounded-lg border border-gray-100 hover:border-brand-teal/30 transition-colors group">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-semibold text-brand-dark group-hover:text-brand-teal transition-colors">{cls.subject}</h4>
-                      <p className="text-xs text-brand-gray">{cls.code}</p>
+              {notices.slice(0, 5).map((notice) => (
+                <div 
+                  key={notice.id} 
+                  className="bg-gray-50 rounded-xl border border-gray-200 p-6 hover:shadow-md transition-all cursor-pointer group"
+                  onClick={() => setPreviewNotice(notice)}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-brand-blue/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                      <Bell className="w-6 h-6 text-brand-blue" />
                     </div>
-                    <span className="text-xs font-medium text-gray-500 bg-gray-50 px-2 py-1 rounded">{cls.room}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <Clock className="w-3 h-3" />
-                    {cls.time}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-bold text-brand-blue group-hover:text-brand-teal transition-colors">{notice.title}</h3>
+                        {notice.priority === 'HIGH' && (
+                          <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> Important
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-brand-gray mb-3 line-clamp-2">{notice.content}</p>
+                      {notice.imageUrl && (
+                        <div className="relative mb-3">
+                          {notice.imageUrl.endsWith('.pdf') ? (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+                              <FileText className="w-8 h-8 text-red-600 flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-red-800">PDF Document</p>
+                                <p className="text-xs text-red-600">Click to view</p>
+                              </div>
+                              <Maximize2 className="w-5 h-5 text-red-600" />
+                            </div>
+                          ) : (
+                            <>
+                              <img 
+                                src={`http://localhost:5000${notice.imageUrl}`} 
+                                alt={notice.title} 
+                                className="rounded-lg max-h-48 object-cover w-full"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
+                                <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Clock className="w-4 h-4" />
+                        <span>{new Date(notice.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
-              <button className="w-full py-2 text-sm text-brand-gray hover:text-brand-blue border border-dashed border-gray-300 rounded-lg hover:border-brand-blue transition-all">
-                + Add Event
-              </button>
             </div>
+          ) : (
+            <div className="text-center py-12">
+              <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">No notices yet</h3>
+              <p className="text-gray-500">Check back later for campus announcements</p>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-lg font-bold text-brand-dark mb-6">Recent Activity</h2>
+          <div className="space-y-6">
+            {activities.length === 0 ? (
+              <p className="text-center text-gray-500 py-4">No recent activities</p>
+            ) : (
+              activities.map((activity) => {
+                const { icon: Icon, color: iconColor, bg } = getActivityIcon(activity.type);
+                return (
+                  <div key={activity.id} className="flex gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${bg}`}>
+                      <Icon className={`w-5 h-5 ${iconColor}`} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-brand-dark">
+                        <span className="font-semibold">{activity.user}</span> {activity.action} <span className="font-medium text-brand-blue">"{activity.target}"</span>
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> {activity.time}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </div>
+
+      {/* Notice Preview Modal */}
+      {previewNotice && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setPreviewNotice(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between z-10">
+              <div>
+                <h2 className="text-2xl font-bold text-brand-dark">{previewNotice.title}</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Posted on {new Date(previewNotice.createdAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
+              <button 
+                onClick={() => setPreviewNotice(null)} 
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {previewNotice.priority === 'HIGH' && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                  <span className="text-red-800 font-medium">This is an important notice</span>
+                </div>
+              )}
+              
+              <div className="prose max-w-none">
+                <p className="text-gray-700 text-lg whitespace-pre-wrap leading-relaxed">
+                  {previewNotice.content}
+                </p>
+              </div>
+              
+              {previewNotice.imageUrl && (
+                <div className="mt-6">
+                  {previewNotice.imageUrl.endsWith('.pdf') ? (
+                    <iframe
+                      src={`http://localhost:5000${previewNotice.imageUrl}`}
+                      className="w-full h-[600px] rounded-lg border-2 border-gray-200"
+                      title={previewNotice.title}
+                    />
+                  ) : (
+                    <img 
+                      src={`http://localhost:5000${previewNotice.imageUrl}`} 
+                      alt={previewNotice.title} 
+                      className="w-full rounded-lg shadow-lg"
+                    />
+                  )}
+                </div>
+              )}
+              
+              <div className="border-t pt-4 mt-6">
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <div>
+                    <span className="font-medium">Posted by:</span> {previewNotice.author?.name || 'Admin'}
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(previewNotice.priority)}`}>
+                    {previewNotice.priority} Priority
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

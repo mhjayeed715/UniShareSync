@@ -39,3 +39,11 @@ exports.adminOnly = (req, res, next) => {
     return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
 };
+
+exports.adminOrFaculty = (req, res, next) => {
+  if (req.user && (req.user.role === 'ADMIN' || req.user.role === 'FACULTY')) {
+    next();
+  } else {
+    return res.status(403).json({ message: 'Access denied. Admin or Faculty only.' });
+  }
+};
