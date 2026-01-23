@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const { notifyAll, NotificationTypes } = require('../utils/notificationHelper');
 
 // Get all clubs
 exports.getAllClubs = async (req, res) => {
@@ -62,6 +63,13 @@ exports.createClub = async (req, res) => {
         founderId: req.user.id
       }
     });
+
+    // Auto-notify all users
+    await notifyAll(
+      'New Club Created',
+      `${name} club is now active. Join now!`,
+      NotificationTypes.INFO
+    );
 
     res.status(201).json({ success: true, data: club, message: 'Club created successfully' });
   } catch (error) {

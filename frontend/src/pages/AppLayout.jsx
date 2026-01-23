@@ -16,6 +16,9 @@ const AppLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showSettings, setShowSettings] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [profileData, setProfileData] = useState({ name: '' });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -24,6 +27,9 @@ const AppLayout = ({ onLogout }) => {
 
   useEffect(() => {
     setProfileData({ name: user.name });
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleUpdateProfile = async () => {
@@ -66,6 +72,49 @@ const AppLayout = ({ onLogout }) => {
       }
     } catch (error) {
       alert(error.message || 'Failed to change password');
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      console.log('Fetched notifications:', data);
+      if (data.success) {
+        setNotifications(data.notifications);
+        setUnreadCount(data.unreadCount);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const markAsRead = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:5000/api/notifications/read-all', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error marking all as read:', error);
     }
   };
 
@@ -271,9 +320,16 @@ const AppLayout = ({ onLogout }) => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-gray-400 hover:text-brand-blue transition-colors">
+            <button 
+              onClick={() => setShowNotifications(!showNotifications)} 
+              className="relative p-2 text-gray-400 hover:text-brand-blue transition-colors"
+            >
               <Bell className="w-6 h-6" />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white text-white text-xs flex items-center justify-center font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
             
             <div className="h-8 w-px bg-gray-200 mx-2"></div>
@@ -300,6 +356,69 @@ const AppLayout = ({ onLogout }) => {
           {renderContent()}
         </main>
       </div>
+
+      {/* Notifications Panel */}
+      {showNotifications && (
+        <div className="fixed inset-0 z-50" onClick={() => setShowNotifications(false)}>
+          <div className="absolute right-4 top-20 w-96 bg-white rounded-xl shadow-2xl border max-h-[600px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-brand-blue to-brand-teal text-white">
+              <h3 className="font-bold text-lg">Notifications</h3>
+              <div className="flex gap-2">
+                <button onClick={(e) => { e.stopPropagation(); fetchNotifications(); }} className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors">
+                  Refresh
+                </button>
+                {unreadCount > 0 && (
+                  <button onClick={markAllAsRead} className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full transition-colors">
+                    Mark all read
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="overflow-y-auto max-h-[520px]">
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No notifications yet</p>
+                </div>
+              ) : (
+                notifications.map((notif) => (
+                  <div
+                    key={notif.id}
+                    onClick={() => {
+                      markAsRead(notif.id);
+                      if (notif.link) window.location.href = notif.link;
+                    }}
+                    className={`p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
+                      !notif.isRead ? 'bg-blue-50' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                        notif.type === 'success' ? 'bg-green-500' :
+                        notif.type === 'warning' ? 'bg-yellow-500' :
+                        notif.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-sm text-gray-900">{notif.title}</h4>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">{notif.message}</p>
+                        <p className="text-xs text-gray-400 mt-2">
+                          {new Date(notif.createdAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      {!notif.isRead && <div className="w-2 h-2 bg-brand-blue rounded-full flex-shrink-0 mt-2" />}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
