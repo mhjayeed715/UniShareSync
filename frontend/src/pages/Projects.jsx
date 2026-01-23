@@ -7,6 +7,7 @@ const Projects = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('browse');
   const [searchTerm, setSearchTerm] = useState('');
+  const [semesterFilter, setSemesterFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [formData, setFormData] = useState({
@@ -20,52 +21,48 @@ const Projects = () => {
 
   useEffect(() => {
     fetchProjects();
-  }, []);
+  }, [semesterFilter, searchTerm]);
 
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      const allProjects = [
-        {
-          id: 1,
-          title: 'Web Development Project',
-          description: 'Build a responsive e-commerce website using React and Node.js',
-          members: ['John Doe', 'Jane Smith'],
-          maxMembers: 5,
-          deadline: '2024-03-15',
-          createdBy: 'Prof. Wilson',
-          createdById: 'prof123',
-          status: 'RECRUITING',
-          skills: ['React', 'Node.js', 'MongoDB'],
-          progress: 25,
-          semester: 'Spring 2024',
-          pendingRequests: [
-            { id: 1, name: 'Bob Smith', email: 'bob@university.edu', requestedAt: '2024-01-22' },
-            { id: 2, name: 'Carol White', email: 'carol@university.edu', requestedAt: '2024-01-21' }
-          ]
-        },
-        {
-          id: 2,
-          title: 'Mobile App Development',
-          description: 'Create a student management mobile application',
-          members: ['Alice Johnson', 'Bob Wilson'],
-          maxMembers: 4,
-          deadline: '2024-04-20',
-          createdBy: 'Dr. Smith',
-          createdById: 'dr456',
-          status: 'ACTIVE',
-          skills: ['React Native', 'Firebase'],
-          progress: 60,
-          semester: 'Spring 2024',
-          pendingRequests: []
-        }
-      ];
+      const token = localStorage.getItem('token');
       
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (semesterFilter) params.append('semester', semesterFilter);
+      if (searchTerm) params.append('search', searchTerm);
+      
+      const response = await fetch(`http://localhost:5000/api/projects?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+      
+      const allProjects = await response.json();
       setProjects(allProjects);
-      setMyProjects(allProjects.filter(p => p.members.includes(user.name)));
+      
+      // Fetch user's projects
+      const myResponse = await fetch('http://localhost:5000/api/projects/my-projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (myResponse.ok) {
+        const userProjects = await myResponse.json();
+        setMyProjects(userProjects);
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
+      setProjects([]);
+      setMyProjects([]);
     } finally {
       setLoading(false);
     }
@@ -73,49 +70,51 @@ const Projects = () => {
 
   const getStatusColor = (status) => {
     switch(status) {
-      case 'RECRUITING': return 'bg-blue-100 text-blue-800';
-      case 'ACTIVE': return 'bg-green-100 text-green-800';
-      case 'COMPLETED': return 'bg-gray-100 text-gray-800';
+      case 'ACTIVE': return 'bg-blue-100 text-blue-800';
+      case 'COMPLETED': return 'bg-green-100 text-green-800';
+      case 'PAUSED': return 'bg-yellow-100 text-yellow-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status) => {
     switch(status) {
-      case 'RECRUITING': return <UserPlus className="w-4 h-4" />;
       case 'ACTIVE': return <Clock className="w-4 h-4" />;
       case 'COMPLETED': return <CheckCircle className="w-4 h-4" />;
+      case 'PAUSED': return <AlertCircle className="w-4 h-4" />;
+      case 'CANCELLED': return <X className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
 
-  const filteredProjects = (activeTab === 'browse' ? projects : myProjects).filter(project =>
-    project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProjects = activeTab === 'browse' ? projects : myProjects;
 
   const handleJoinProject = async (projectId) => {
     try {
-      const project = projects.find(p => p.id === projectId);
-      if (project.createdById === user.id) {
-        alert('You are the creator of this project');
-        return;
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/projects/${projectId}/join`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to join project');
       }
       
-      // Add to pending requests
-      setProjects(projects.map(p => 
-        p.id === projectId
-          ? { ...p, pendingRequests: [...(p.pendingRequests || []), { 
-              id: Date.now(), 
-              name: user.name, 
-              email: user.email, 
-              requestedAt: new Date().toISOString().split('T')[0] 
-            }] }
-          : p
-      ));
-      alert('Join request sent successfully!');
+      const result = await response.json();
+      alert(result.message);
+      
+      // Refresh projects
+      fetchProjects();
     } catch (error) {
       console.error('Error joining project:', error);
+      alert(error.message || 'Failed to join project');
     }
   };
 
@@ -141,11 +140,63 @@ const Projects = () => {
     ));
   };
 
-  const handleDeleteProject = (projectId) => {
-    if (confirm('Are you sure you want to delete this project?')) {
+  const handleDeleteProject = async (projectId) => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete project');
+      }
+      
+      // Update local state
       setProjects(projects.filter(p => p.id !== projectId));
       setMyProjects(myProjects.filter(p => p.id !== projectId));
+      
       alert('Project deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert(error.message || 'Failed to delete project');
+    }
+  };
+
+  const handleStatusChange = async (projectId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Status update failed:', response.status, errorText);
+        throw new Error(`Failed to update status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      // Update local state
+      setProjects(projects.map(p => p.id === projectId ? {...p, status: newStatus} : p));
+      setMyProjects(myProjects.map(p => p.id === projectId ? {...p, status: newStatus} : p));
+      
+      alert(result.message || 'Project status updated successfully!');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert(error.message || 'Failed to update status');
     }
   };
 
@@ -157,13 +208,15 @@ const Projects = () => {
             <h2 className="text-3xl font-bold text-brand-blue">Project Collaboration</h2>
             <p className="text-brand-gray mt-1">Join collaborative projects and work with your peers</p>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            <Plus className="w-4 h-4" />
-            Create Project
-          </button>
+          {user.role === 'STUDENT' && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4" />
+              Create Project
+            </button>
+          )}
         </div>
 
         {/* Tabs */}
@@ -183,17 +236,33 @@ const Projects = () => {
             </button>
           </div>
 
-          {/* Search */}
+          {/* Search and Filters */}
           <div className="p-4 border-b">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
-              />
+            <div className="flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[200px]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search projects..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
+                  />
+                </div>
+              </div>
+              {activeTab === 'browse' && (
+                <select
+                  value={semesterFilter}
+                  onChange={(e) => setSemesterFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
+                >
+                  <option value="">All Semesters</option>
+                  {Array.from({length: 12}, (_, i) => (
+                    <option key={i+1} value={`Semester ${i+1}`}>Semester {i+1}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -243,15 +312,8 @@ const Projects = () => {
 
                     {activeTab === 'my-projects' && (
                       <div className="mb-4">
-                        <div className="flex items-center justify-between text-sm mb-2">
-                          <span className="text-gray-500">Progress</span>
-                          <span className="font-medium">{project.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className="bg-brand-blue h-2 rounded-full transition-all"
-                            style={{ width: `${project.progress}%` }}
-                          ></div>
+                        <div className="text-sm text-gray-500 mb-2">
+                          <span>Collaboration Tools: Document sharing, task management, and team communication</span>
                         </div>
                       </div>
                     )}
@@ -259,12 +321,17 @@ const Projects = () => {
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        <span>{project.members.length}/{project.maxMembers}</span>
+                        <span>{project.members.length}/{project.maxMembers} members</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         <span>{new Date(project.deadline).toLocaleDateString()}</span>
                       </div>
+                      {project.semester && (
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                          {project.semester}
+                        </span>
+                      )}
                     </div>
 
                     <div className="text-xs text-gray-400 mb-4">
@@ -278,7 +345,7 @@ const Projects = () => {
                       >
                         View Details
                       </button>
-                      {activeTab === 'browse' && !project.members.includes(user.name) && project.members.length < project.maxMembers && !project.pendingRequests?.some(r => r.name === user.name) && (
+                      {activeTab === 'browse' && user.role !== 'FACULTY' && !project.members.includes(user.name) && project.members.length < (project.maxMembers || 10) && (
                         <button
                           onClick={() => handleJoinProject(project.id)}
                           className="bg-brand-blue text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700"
@@ -286,16 +353,37 @@ const Projects = () => {
                           Request to Join
                         </button>
                       )}
-                      {activeTab === 'browse' && project.pendingRequests?.some(r => r.name === user.name) && (
-                        <span className="text-yellow-600 text-sm font-medium">Request Pending</span>
+                      {activeTab === 'browse' && project.members.includes(user.name) && (
+                        <span className="text-green-600 text-sm font-medium">Member</span>
+                      )}
+                      {activeTab === 'browse' && project.members.length >= (project.maxMembers || 10) && (
+                        <span className="text-gray-500 text-sm font-medium">Full</span>
+                      )}
+                      {activeTab === 'browse' && user.role === 'FACULTY' && (
+                        <span className="text-blue-600 text-sm font-medium">Faculty View</span>
                       )}
                       {activeTab === 'my-projects' && project.createdBy === user.name && (
-                        <button
-                          onClick={() => handleDeleteProject(project.id)}
-                          className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
+                        <div className="flex gap-2">
+                          <select
+                            value={project.status}
+                            onChange={(e) => handleStatusChange(project.id, e.target.value)}
+                            className="text-sm border rounded px-2 py-1"
+                          >
+                            <option value="ACTIVE">Active</option>
+                            <option value="COMPLETED">Completed</option>
+                            <option value="PAUSED">Paused</option>
+                            <option value="CANCELLED">Cancelled</option>
+                          </select>
+                          <button
+                            onClick={() => handleDeleteProject(project.id)}
+                            className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                      {activeTab === 'my-projects' && project.createdBy !== user.name && (
+                        <span className="text-green-600 text-sm font-medium">Member</span>
                       )}
                     </div>
                   </div>
@@ -339,7 +427,7 @@ const Projects = () => {
               )}
               
               <div>
-                <h3 className="font-semibold mb-2">Team Members ({selectedProject.members.length}/{selectedProject.maxMembers})</h3>
+                <h3 className="font-semibold mb-2">Team Members ({selectedProject.members.length}/{selectedProject.maxMembers || 10})</h3>
                 <div className="space-y-2">
                   {selectedProject.members.map((member, index) => (
                     <div key={index} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
@@ -352,6 +440,9 @@ const Projects = () => {
                       )}
                     </div>
                   ))}
+                  {selectedProject.members.length === 0 && (
+                    <p className="text-gray-500 text-sm">No members yet</p>
+                  )}
                 </div>
               </div>
               
@@ -430,7 +521,44 @@ const Projects = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <form className="p-6 space-y-4">
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  const token = localStorage.getItem('token');
+                  
+                  const response = await fetch('http://localhost:5000/api/projects', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                  });
+                  
+                  if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Failed to create project');
+                  }
+                  
+                  const result = await response.json();
+                  alert(result.message);
+                  
+                  setShowCreateModal(false);
+                  setFormData({
+                    title: '',
+                    description: '',
+                    maxMembers: 5,
+                    deadline: '',
+                    semester: ''
+                  });
+                  
+                  // Refresh projects
+                  fetchProjects();
+                } catch (error) {
+                  console.error('Error creating project:', error);
+                  alert(error.message || 'Failed to create project');
+                }
+              }} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Project Title</label>
                 <input
@@ -459,10 +587,9 @@ const Projects = () => {
                   required
                 >
                   <option value="">Select Semester</option>
-                  <option value="Spring 2024">Spring 2024</option>
-                  <option value="Summer 2024">Summer 2024</option>
-                  <option value="Fall 2024">Fall 2024</option>
-                  <option value="Winter 2024">Winter 2024</option>
+                  {Array.from({length: 12}, (_, i) => (
+                    <option key={i+1} value={`Semester ${i+1}`}>Semester {i+1}</option>
+                  ))}
                 </select>
               </div>
               <div>

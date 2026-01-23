@@ -126,7 +126,6 @@ const AdminDashboard = () => {
     { id: 'projects', icon: FolderKanban, label: 'Project Oversight' },
     { id: 'feedback', icon: MessageSquare, label: 'Feedback & Support' },
     { id: 'lostfound', icon: Flag, label: 'Lost & Found' },
-    { id: 'analytics', icon: BarChart3, label: 'Analytics & Reports' },
     { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
@@ -138,7 +137,21 @@ const AdminDashboard = () => {
     if (activeSection === 'events') return <ClubEventManager />;
     if (activeSection === 'projects') return <ProjectManagement />;
     if (activeSection === 'lostfound') return <LostFoundManagement />;
-    if (activeSection === 'feedback') return <FeedbackManagement />;
+    if (activeSection === 'feedback') {
+      try {
+        return <FeedbackManagement />;
+      } catch (error) {
+        console.error('FeedbackManagement error:', error);
+        return (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Feedback Management</h2>
+              <p className="text-gray-600">Please refresh the page and try again.</p>
+            </div>
+          </div>
+        );
+      }
+    }
     if (activeSection === 'settings') return (
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">Settings</h2>
@@ -150,6 +163,8 @@ const AdminDashboard = () => {
                 <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
                   {profilePreview ? (
                     <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
+                  ) : user.profilePicture ? (
+                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name?.[0]
                   )}
@@ -219,18 +234,16 @@ const AdminDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {stats && Object.entries(stats).map(([key, data]) => {
+            {stats && Object.entries(stats).map(([key, data], index) => {
               const colors = { students: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' }, faculty: { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-200' }, resources: { bg: 'bg-green-50', text: 'text-green-600', border: 'border-green-200' }, events: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-200' }, projects: { bg: 'bg-teal-50', text: 'text-teal-600', border: 'border-teal-200' }, feedback: { bg: 'bg-pink-50', text: 'text-pink-600', border: 'border-pink-200' } };
               const color = colors[key] || colors.students;
               return (
-                <div key={key} className={`bg-white rounded-xl shadow-sm border-2 ${color.border} p-6 hover:shadow-md transition-all`}>
+                <div key={`${key}-${index}`} className={`bg-white rounded-xl shadow-sm border-2 ${color.border} p-6 hover:shadow-md transition-all`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className={`p-3 rounded-lg ${color.bg}`}><Database className={`w-6 h-6 ${color.text}`} /></div>
-                    {data.trend && (data.trend === 'up' ? <TrendingUp className="w-5 h-5 text-green-500" /> : <TrendingDown className="w-5 h-5 text-red-500" />)}
                   </div>
                   <p className="text-sm font-medium text-gray-600 uppercase tracking-wide mb-1">{key}</p>
                   <p className="text-3xl font-bold text-gray-900 mb-2">{data.value}</p>
-                  {data.change && <p className={`text-sm font-medium ${data.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>{data.change} from last month</p>}
                 </div>
               );
             })}
@@ -271,11 +284,11 @@ const AdminDashboard = () => {
                 {recentActivities.length === 0 ? (
                   <p className="text-center text-gray-500 py-4">No recent activities</p>
                 ) : (
-                  recentActivities.map((activity) => {
+                  recentActivities.map((activity, index) => {
                     const iconMap = { 'Megaphone': Megaphone, 'Upload': FileText, 'Flag': FolderKanban, 'Calendar': Calendar };
                     const Icon = iconMap[activity.icon] || FileText;
                     return (
-                      <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                      <div key={`${activity.id}-${index}`} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
                         <div className={`p-2 rounded-lg ${activity.bg} flex-shrink-0`}><Icon className={`w-4 h-4 ${activity.color}`} /></div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-gray-900"><span className="font-semibold">{activity.user}</span> {activity.action}</p>
@@ -315,11 +328,11 @@ const AdminDashboard = () => {
         <div className="h-full flex flex-col">
           <div className="p-5 border-b border-gray-700 flex items-center justify-between">
             {sidebarOpen && <div className="flex items-center gap-3"><img src="/unisharesync.png" alt="UniShareSync Logo" className="w-10 h-10 rounded-lg" /><div><span className="font-bold text-lg">UniShareSync</span><p className="text-xs text-gray-400">Admin Portal</p></div></div>}
-            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-700 rounded-lg transition-colors">{sidebarOpen ? <X size={20} /> : <Menu size={20} />}</button>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-700 rounded-lg transition-colors">{sidebarOpen ? <Menu size={20} /> : <Menu size={20} />}</button>
           </div>
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {menuItems.map(item => (
-              <button key={item.id} onClick={() => setActiveSection(item.id)} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeSection === item.id ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg scale-105' : 'hover:bg-gray-700/50'}`}>
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
+            {menuItems.map((item, index) => (
+              <button key={`${item.id}-${index}`} onClick={() => setActiveSection(item.id)} className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg transition-all ${activeSection === item.id ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg scale-105' : 'hover:bg-gray-700/50'}`}>
                 <item.icon size={20} className="flex-shrink-0" />
                 {sidebarOpen && <span className="text-sm font-medium flex-1 text-left">{item.label}</span>}
                 {sidebarOpen && item.badge && <span className="px-2 py-0.5 bg-red-500 text-xs font-bold rounded-full">{item.badge}</span>}
@@ -327,7 +340,7 @@ const AdminDashboard = () => {
             ))}
           </nav>
           <div className="p-4 border-t border-gray-700">
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-600 transition-colors"><LogOut size={20} />{sidebarOpen && <span className="text-sm font-medium">Logout</span>}</button>
+            <button onClick={handleLogout} className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg hover:bg-red-600 transition-colors`}><LogOut size={20} />{sidebarOpen && <span className="text-sm font-medium">Logout</span>}</button>
           </div>
         </div>
       </aside>
@@ -341,14 +354,14 @@ const AdminDashboard = () => {
                 <Bell size={20} className="text-gray-600" />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
-              <button onClick={handleLogout} className="flex items-center gap-3 pl-4 border-l border-gray-200 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+              <button onClick={() => setActiveSection('settings')} className="flex items-center gap-3 pl-4 border-l border-gray-200 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                   <p className="text-xs text-gray-500 flex items-center gap-1"><Shield className="w-3 h-3" />Administrator</p>
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg overflow-hidden">
                   {user.profilePicture ? (
-                    <img src={`http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name?.[0]
                   )}
@@ -379,11 +392,11 @@ const AdminDashboard = () => {
             </div>
             <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
               <div className="space-y-3">
-                {getSortedActivities().map((activity) => {
+                {getSortedActivities().map((activity, index) => {
                   const iconMap = { 'Megaphone': Megaphone, 'Upload': FileText, 'Flag': FolderKanban, 'Calendar': Calendar };
                   const Icon = iconMap[activity.icon] || FileText;
                   return (
-                    <div key={activity.id} className="flex items-start gap-3 p-4 rounded-lg border hover:bg-gray-50">
+                    <div key={`${activity.id}-${index}`} className="flex items-start gap-3 p-4 rounded-lg border hover:bg-gray-50">
                       <div className={`p-2 rounded-lg ${activity.bg} flex-shrink-0`}><Icon className={`w-5 h-5 ${activity.color}`} /></div>
                       <div className="flex-1">
                         <p className="text-sm text-gray-900"><span className="font-semibold">{activity.user}</span> {activity.action}</p>

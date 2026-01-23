@@ -66,6 +66,41 @@ exports.getItem = async (req, res) => {
   }
 };
 
+// Create item (admin)
+exports.createItem = async (req, res) => {
+  try {
+    const { title, description, type, category, location, contactInfo } = req.body;
+    const userId = req.user.id;
+
+    const item = await prisma.lostFoundItem.create({
+      data: {
+        title,
+        description,
+        category: category || 'Other',
+        itemType: type?.toLowerCase() || 'lost',
+        lastSeenLocation: location,
+        lastSeenDate: new Date(),
+        status: 'active',
+        itemStatus: 'open',
+        postedBy: userId,
+        contactName: req.user.name,
+        contactEmail: contactInfo,
+        isAnonymous: false,
+        resolved: false
+      }
+    });
+
+    res.status(201).json({ 
+      success: true,
+      message: 'Item created successfully', 
+      data: item 
+    });
+  } catch (error) {
+    console.error('Admin create item error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Update item status
 exports.updateItemStatus = async (req, res) => {
   try {
@@ -99,6 +134,34 @@ exports.updateItemStatus = async (req, res) => {
 
     res.json({ success: true, data: item, message: 'Item status updated' });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Update item (admin)
+exports.updateItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, category, location, contactInfo } = req.body;
+
+    const item = await prisma.lostFoundItem.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        category,
+        lastSeenLocation: location,
+        contactEmail: contactInfo
+      }
+    });
+
+    res.json({ 
+      success: true, 
+      data: item, 
+      message: 'Item updated successfully' 
+    });
+  } catch (error) {
+    console.error('Update item error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

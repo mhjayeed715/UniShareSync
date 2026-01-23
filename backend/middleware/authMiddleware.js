@@ -20,14 +20,18 @@ exports.protect = async (req, res, next) => {
       });
 
       if (!req.user) {
+        console.log('User not found for token');
         return res.status(401).json({ message: 'User not found' });
       }
 
+      console.log('Authenticated user:', req.user.name, req.user.role);
       next();
     } catch (error) {
+      console.log('Token verification failed:', error.message);
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   } else {
+    console.log('No authorization header found');
     return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };

@@ -25,10 +25,10 @@ const ClubEventManager = () => {
     setLoading(true);
     try {
       if (activeTab === 'events') {
-        const res = await api.get('/api/events');
+        const res = await api.getEvents();
         setEvents(res.data || []);
       } else {
-        const res = await api.get('/api/clubs');
+        const res = await api.getClubs();
         setClubs(res.data || []);
       }
     } catch (error) {
@@ -40,7 +40,7 @@ const ClubEventManager = () => {
 
   const fetchPendingRequests = async (clubId) => {
     try {
-      const res = await api.get(`/api/clubs/${clubId}/requests`);
+      const res = await api.getClubRequests(clubId);
       setPendingRequests(res.data || []);
       setSelectedClub(clubId);
     } catch (error) {
@@ -52,7 +52,7 @@ const ClubEventManager = () => {
 
   const fetchClubMembers = async (clubId) => {
     try {
-      const res = await api.get(`/api/clubs/${clubId}`);
+      const res = await api.getClub(clubId);
       setClubMembers(res.data?.members || []);
       setShowMembersModal(true);
     } catch (error) {
@@ -78,9 +78,9 @@ const ClubEventManager = () => {
         };
         
         if (editingItem) {
-          await api.put(`/api/events/${editingItem.id}`, data);
+          await api.updateEvent(editingItem.id, data);
         } else {
-          await api.post('/api/events', data);
+          await api.createEvent(data);
         }
       } else {
         const data = {
@@ -89,9 +89,9 @@ const ClubEventManager = () => {
         };
         
         if (editingItem) {
-          await api.put(`/api/clubs/${editingItem.id}`, data);
+          await api.updateClub(editingItem.id, data);
         } else {
-          await api.post('/api/clubs', data);
+          await api.createClub(data);
         }
       }
       
@@ -107,7 +107,11 @@ const ClubEventManager = () => {
     if (!confirm('Are you sure?')) return;
     
     try {
-      await api.delete(`/api/${type}s/${id}`);
+      if (type === 'event') {
+        await api.deleteEvent(id);
+      } else {
+        await api.deleteClub(id);
+      }
       alert('Deleted successfully');
       fetchData();
     } catch (error) {
@@ -117,7 +121,7 @@ const ClubEventManager = () => {
 
   const handleJoinRequest = async (clubId, memberId, action) => {
     try {
-      await api.put(`/api/clubs/${clubId}/requests/${memberId}`, { action });
+      await api.handleClubRequest(clubId, memberId, action);
       alert(`Request ${action}d successfully`);
       fetchPendingRequests(clubId);
       fetchData();

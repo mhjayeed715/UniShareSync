@@ -8,6 +8,9 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
   const [error, setError] = useState('');
   const inputsRef = useRef([]);
 
+  // Get remember me preference from localStorage
+  const rememberMe = localStorage.getItem('rememberMe') === 'true';
+
   const handleInputChange = (e, index) => {
     const { value } = e.target;
     if (/^[0-9]$/.test(value) || value === '') {
@@ -58,10 +61,10 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/verify-otp', {
+      const res = await fetch('http://localhost:5000/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, otp: otpCode }),
+        body: JSON.stringify({ userId, otp: otpCode, rememberMe }),
       });
 
       const data = await res.json();
@@ -84,6 +87,8 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
       // setOtp(['', '', '', '', '', '']);
     } finally {
       setLoading(false);
+      // Clean up remember me preference
+      localStorage.removeItem('rememberMe');
     }
   };
 
@@ -100,7 +105,7 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
   const handleResendOtp = async () => {
     toast.loading('Resending OTP...');
     try {
-        const res = await fetch('/api/auth/resend-otp', {
+        const res = await fetch('http://localhost:5000/api/auth/resend-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: userEmail }),
@@ -153,6 +158,18 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
           </div>
           
           {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+
+          <div className="mb-4">
+            <label className="flex items-center justify-center">
+              <input 
+                type="checkbox" 
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-brand-teal rounded border-gray-300 focus:ring-brand-teal"
+              />
+              <span className="ml-2 text-sm text-brand-gray">Remember me for 24 hours</span>
+            </label>
+          </div>
 
           <button 
             type="submit"
