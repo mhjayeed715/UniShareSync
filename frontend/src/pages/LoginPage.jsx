@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +20,7 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
       const res = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       let data;
@@ -46,6 +47,7 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
         if (data.userId) {
             setUserId(data.userId);
         }
+        localStorage.setItem('rememberMe', rememberMe.toString());
         toast.success(data.message || 'OTP sent to your email');
         onNavigate('otp');
       }
@@ -129,8 +131,13 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
 
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <input type="checkbox" className="w-4 h-4 text-brand-teal rounded border-gray-300 focus:ring-brand-teal"/>
-                <span className="ml-2 text-sm text-brand-gray">Remember me</span>
+                <input 
+                  type="checkbox" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-brand-teal rounded border-gray-300 focus:ring-brand-teal"
+                />
+                <span className="ml-2 text-sm text-brand-gray">Remember me for 24 hours</span>
               </label>
               <a href="#" className="text-sm font-medium text-brand-teal hover:text-teal-700">Forgot password?</a>
             </div>

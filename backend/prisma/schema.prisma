@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -17,6 +18,7 @@ model User {
   phone       String?
   bio         String?  @db.Text
   profilePicture String?
+  lastLoginSkipOtp DateTime?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
@@ -110,6 +112,7 @@ model Resource {
   courseId    String?
   courseName  String?
   subject     String?
+  semester    Int?      @default(8)
   resourceType String   @default("notes")
   filePath    String
   fileName    String?

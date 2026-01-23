@@ -95,6 +95,8 @@ const AppLayout = ({ onLogout }) => {
                   <div className="w-20 h-20 bg-brand-blue rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
                     {profilePreview ? (
                       <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
+                    ) : user.profilePicture ? (
+                      <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       user.name?.charAt(0) || 'U'
                     )}
@@ -165,7 +167,19 @@ const AppLayout = ({ onLogout }) => {
       case 'Lost & Found':
         return <LostFound />;
       case 'Feedback':
-        return <Feedback />;
+        try {
+          return <Feedback />;
+        } catch (error) {
+          console.error('Feedback component error:', error);
+          return (
+            <div className="p-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h3 className="text-red-800 font-semibold">Error Loading Feedback</h3>
+                <p className="text-red-600 text-sm mt-1">Please try refreshing the page.</p>
+              </div>
+            </div>
+          );
+        }
       default:
         return (
           <div className="flex items-center justify-center h-full text-gray-400">
@@ -182,53 +196,62 @@ const AppLayout = ({ onLogout }) => {
     <div className="min-h-screen bg-brand-light flex font-sans">
       
       {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-40 w-64 bg-brand-blue text-white transition-transform duration-300 ease-in-out
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:flex-shrink-0
-      `}>
-        <div className="h-16 flex items-center px-6 border-b border-blue-800">
-          <img src="/unisharesync.png" alt="UniShareSync Logo" className="w-8 h-8 rounded-lg mr-2" />
-          <span className="text-xl font-bold tracking-tight">UniShareSync</span>
-        </div>
-
-        <div className="p-4 space-y-1">
-          <div className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-4 px-2">Menu</div>
-          {menuItems.map((item, index) => (
+      <aside className={`bg-brand-blue text-white transition-all duration-300 shadow-2xl ${
+        sidebarOpen ? 'w-64' : 'w-20'
+      }`}>
+        <div className="h-full flex flex-col">
+          <div className="h-16 flex items-center justify-between px-6 border-b border-blue-800">
+            {sidebarOpen && (
+              <div className="flex items-center gap-3">
+                <img src="/unisharesync.png" alt="UniShareSync Logo" className="w-8 h-8 rounded-lg" />
+                <span className="text-xl font-bold tracking-tight">UniShareSync</span>
+              </div>
+            )}
             <button 
-              key={index}
-              onClick={() => {
-                setActiveTab(item.label);
-                setShowSettings(false);
-                if (window.innerWidth < 1024) setSidebarOpen(false);
-              }}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                activeTab === item.label && !showSettings
-                  ? 'bg-brand-teal text-white shadow-md' 
-                  : 'text-blue-100 hover:bg-blue-800'
-              }`}
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 hover:bg-blue-800 rounded-lg transition-colors"
             >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
+              <Menu className="w-5 h-5" />
             </button>
-          ))}
-        </div>
+          </div>
 
-        <div className="absolute bottom-0 w-full p-4 border-t border-blue-800">
-          <button 
-            onClick={() => { setShowSettings(true); setActiveTab('Dashboard'); }}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:bg-blue-800 transition-colors mb-2"
-          >
-            <Settings className="w-5 h-5" />
-            <span>Settings</span>
-          </button>
-          <button 
-            onClick={onLogout}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-blue-100 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-            <span>Logout</span>
-          </button>
+          <div className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
+            {sidebarOpen && <div className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-4 px-2">Menu</div>}
+            {menuItems.map((item, index) => (
+              <button 
+                key={index}
+                onClick={() => {
+                  setActiveTab(item.label);
+                  setShowSettings(false);
+                }}
+                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg transition-all ${
+                  activeTab === item.label && !showSettings
+                    ? 'bg-brand-teal text-white shadow-md' 
+                    : 'text-blue-100 hover:bg-blue-800'
+                }`}
+              >
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                {sidebarOpen && <span className="font-medium">{item.label}</span>}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-4 border-t border-blue-800">
+            <button 
+              onClick={() => { setShowSettings(true); setActiveTab('Dashboard'); }}
+              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-blue-800 transition-colors mb-2`}
+            >
+              <Settings className="w-5 h-5" />
+              {sidebarOpen && <span>Settings</span>}
+            </button>
+            <button 
+              onClick={onLogout}
+              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-red-500/10 hover:text-red-400 transition-colors`}
+            >
+              <LogOut className="w-5 h-5" />
+              {sidebarOpen && <span>Logout</span>}
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -237,15 +260,8 @@ const AppLayout = ({ onLogout }) => {
         
         {/* Top Navbar */}
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8 z-10 flex-shrink-0">
-          <button 
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden text-gray-500 hover:text-brand-blue"
-          >
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-
-          {/* Search Bar (Hidden on mobile) */}
-          <div className="hidden md:flex flex-1 max-w-lg mx-8 relative">
+          {/* Search Bar */}
+          <div className="flex flex-1 max-w-lg mx-8 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input 
               type="text" 
@@ -265,7 +281,7 @@ const AppLayout = ({ onLogout }) => {
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setShowSettings(true)}>
               <div className="w-9 h-9 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-sm overflow-hidden">
                 {user.profilePicture ? (
-                  <img src={`http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   user.name?.charAt(0) || 'U'
                 )}

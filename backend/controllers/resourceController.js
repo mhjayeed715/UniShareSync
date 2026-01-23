@@ -1,6 +1,7 @@
 const prisma = require('../config/prisma');
 const path = require('path');
 const fs = require('fs');
+const { getCoursesBySemester, matchCourseCode, getSemesterFromCourse } = require('../utils/routineParser');
 
 // Upload a new resource
 exports.uploadResource = async (req, res) => {
@@ -9,7 +10,7 @@ exports.uploadResource = async (req, res) => {
     console.log('Body:', req.body);
     console.log('File:', req.file);
     
-    const { title, description, courseName, type } = req.body;
+    const { title, description, courseName, type, semester } = req.body;
     const userId = req.user.id;
 
     if (!req.file) {
@@ -26,6 +27,7 @@ exports.uploadResource = async (req, res) => {
     console.log('Creating resource with:', {
       title,
       courseName,
+      semester: parseInt(semester) || 8,
       filePath: fileUrl,
       fileName: req.file.originalname,
       resourceType: type || 'notes',
@@ -37,6 +39,7 @@ exports.uploadResource = async (req, res) => {
         title,
         description: description || '',
         courseName: courseName || '',
+        semester: parseInt(semester) || 8,
         filePath: fileUrl,
         fileName: req.file.originalname,
         fileSize: req.file.size,
@@ -85,25 +88,35 @@ exports.uploadResource = async (req, res) => {
   }
 };
 
-// Get all approved resources
+// Get all approved resources with search and filter
 exports.getAllResources = async (req, res) => {
   try {
-    const { courseId, type, search, page = 1, limit = 20 } = req.query;
+    const { search, semester, type, page = 1, limit = 20 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const where = { status: 'APPROVED' };
     
-    if (courseId) {
-      where.courseId = courseId;
-    }
-    if (type) {
-      where.type = type;
-    }
+    const where = { 
+      isApproved: true,
+      isDeleted: false
+    };
+    
+    // Add search filter
     if (search) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
+        { description: { contains: search, mode: 'insensitive' } },
+        { courseName: { contains: search, mode: 'insensitive' } },
+        { subject: { contains: search, mode: 'insensitive' } }
       ];
+    }
+    
+    // Add semester filter
+    if (semester && semester !== 'all') {
+      where.semester = parseInt(semester);
+    }
+    
+    // Add type filter
+    if (type && type !== 'all') {
+      where.resourceType = type;
     }
 
     const [resources, total] = await Promise.all([
@@ -120,22 +133,29 @@ exports.getAllResources = async (req, res) => {
               email: true,
               department: true
             }
-          },
-          course: {
-            select: {
-              id: true,
-              name: true,
-              code: true
-            }
           }
         }
       }),
       prisma.resource.count({ where })
     ]);
 
+    // Group by semester for easy navigation
+    const resourcesBySemester = {};
+    for (let i = 1; i <= 10; i++) {
+      resourcesBySemester[i] = [];
+    }
+    
+    resources.forEach(resource => {
+      const sem = resource.semester || 8;
+      if (resourcesBySemester[sem]) {
+        resourcesBySemester[sem].push(resource);
+      }
+    });
+
     res.json({
       success: true,
-      data: resources,
+      resources: resources,
+      resourcesBySemester,
       pagination: {
         total,
         page: parseInt(page),
@@ -363,6 +383,48 @@ exports.deleteResource = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to delete resource',
+      error: error.message 
+    });
+  }
+};
+
+// Download resource
+exports.downloadResource = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const resource = await prisma.resource.findUnique({
+      where: { id, isApproved: true, isDeleted: false }
+    });
+
+    if (!resource) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Resource not found' 
+      });
+    }
+
+    const filePath = path.join(__dirname, '..', resource.filePath);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'File not found on server' 
+      });
+    }
+
+    // Increment download count
+    await prisma.resource.update({
+      where: { id },
+      data: { downloads: { increment: 1 } }
+    });
+
+    res.download(filePath, resource.fileName);
+  } catch (error) {
+    console.error('Download resource error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to download resource',
       error: error.message 
     });
   }

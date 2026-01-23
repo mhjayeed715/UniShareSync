@@ -27,63 +27,24 @@ const LostFound = () => {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      setItems([
-        {
-          id: 1,
-          title: 'Black Laptop Bag',
-          description: 'Dell laptop bag with charger inside, found near the library entrance',
-          type: 'FOUND',
-          category: 'Electronics',
-          location: 'Library - Main Entrance',
-          contactInfo: 'Contact security office',
-          status: 'ACTIVE',
-          reportedBy: 'Security Team',
-          reportedAt: '2024-01-20',
-          imageUrl: null
-        },
-        {
-          id: 2,
-          title: 'Red Water Bottle',
-          description: 'Stainless steel water bottle with university logo, lost during lunch break',
-          type: 'LOST',
-          category: 'Personal Items',
-          location: 'Cafeteria',
-          contactInfo: 'alice.smith@university.edu',
-          status: 'ACTIVE',
-          reportedBy: 'Alice Smith',
-          reportedAt: '2024-01-18',
-          imageUrl: null
-        },
-        {
-          id: 3,
-          title: 'Blue Textbook',
-          description: 'Computer Science textbook - Data Structures and Algorithms',
-          type: 'FOUND',
-          category: 'Books',
-          location: 'Computer Lab - Room 201',
-          contactInfo: 'Contact lab assistant',
-          status: 'MATCHED',
-          reportedBy: 'Lab Assistant',
-          reportedAt: '2024-01-15',
-          imageUrl: null
-        },
-        {
-          id: 4,
-          title: 'Silver Watch',
-          description: 'Analog watch with leather strap, lost in the gym',
-          type: 'LOST',
-          category: 'Accessories',
-          location: 'Sports Complex',
-          contactInfo: 'john.doe@university.edu',
-          status: 'RESOLVED',
-          reportedBy: 'John Doe',
-          reportedAt: '2024-01-10',
-          imageUrl: null
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/lost-found', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]);
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch items');
+      }
+      
+      const items = await response.json();
+      setItems(items);
     } catch (error) {
       console.error('Error fetching items:', error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -124,16 +85,36 @@ const LostFound = () => {
   const handleSubmitReport = async (e) => {
     e.preventDefault();
     try {
-      // Mock submission
-      const newItem = {
-        id: Date.now(),
-        ...formData,
-        status: 'ACTIVE',
-        reportedBy: user.name,
-        reportedAt: new Date().toISOString().split('T')[0],
-        imageUrl: formData.image ? URL.createObjectURL(formData.image) : null
-      };
-      setItems([newItem, ...items]);
+      const token = localStorage.getItem('token');
+      const formDataToSend = new FormData();
+      
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('type', formData.type);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('contactInfo', formData.contactInfo);
+      
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
+      }
+      
+      const response = await fetch('http://localhost:5000/api/lost-found', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit report');
+      }
+      
+      const result = await response.json();
+      alert(result.message);
+      
       setShowReportModal(false);
       setFormData({
         title: '',
@@ -144,8 +125,89 @@ const LostFound = () => {
         contactInfo: '',
         image: null
       });
+      
+      // Refresh items
+      fetchItems();
     } catch (error) {
       console.error('Error submitting report:', error);
+      alert(error.message || 'Failed to submit report');
+    }
+  };
+
+  const handleFoundResponse = async (itemId) => {
+    try {
+      const response = prompt('Please provide your contact information and details about finding this item:');
+      if (!response) return;
+      
+      const token = localStorage.getItem('token');
+      const apiResponse = await fetch(`http://localhost:5000/api/lost-found/${itemId}/found-response`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: response })
+      });
+      
+      if (!apiResponse.ok) {
+        const error = await apiResponse.json();
+        throw new Error(error.message || 'Failed to submit response');
+      }
+      
+      alert('Your response has been sent to the item owner!');
+    } catch (error) {
+      console.error('Error submitting found response:', error);
+      alert(error.message || 'Failed to submit response');
+    }
+  };
+
+  const handleStatusUpdate = async (itemId, newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update status');
+      }
+      
+      alert('Status updated successfully!');
+      fetchItems();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert(error.message || 'Failed to update status');
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete item');
+      }
+      
+      alert('Item deleted successfully!');
+      fetchItems();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert(error.message || 'Failed to delete item');
     }
   };
 
@@ -303,7 +365,7 @@ const LostFound = () => {
                         <img 
                           src={item.imageUrl.startsWith('blob:') ? item.imageUrl : `http://localhost:5000${item.imageUrl}`} 
                           alt={item.title} 
-                          className="w-full h-32 object-cover rounded-lg border"
+                          className="w-full h-48 object-contain rounded-lg border bg-gray-50"
                         />
                       </div>
                     )}
@@ -331,11 +393,46 @@ const LostFound = () => {
                         <Eye className="w-4 h-4" />
                         View Details
                       </button>
-                      {item.status === 'ACTIVE' && (
-                        <button className="bg-brand-blue text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
-                          Contact
-                        </button>
-                      )}
+                      <div className="flex gap-2">
+                        {item.status === 'ACTIVE' && (
+                          <>
+                            <button className="bg-brand-blue text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
+                              Contact
+                            </button>
+                            {item.type === 'LOST' && (
+                              <button 
+                                onClick={() => handleFoundResponse(item.id)}
+                                className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700"
+                              >
+                                I Found This
+                              </button>
+                            )}
+                          </>
+                        )}
+                        {(item.reportedBy === user.name || user.role === 'ADMIN') && (
+                          <>
+                            {item.status !== 'RESOLVED' && (
+                              <select
+                                onChange={(e) => handleStatusUpdate(item.id, e.target.value)}
+                                className="text-xs border rounded px-2 py-1"
+                                defaultValue=""
+                              >
+                                <option value="" disabled>Update Status</option>
+                                <option value="MATCHED">Mark as Matched</option>
+                                <option value="RESOLVED">Mark as Resolved</option>
+                              </select>
+                            )}
+                            {activeTab === 'my-reports' && (
+                              <button 
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

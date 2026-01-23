@@ -23,33 +23,24 @@ const ProjectManagement = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      setProjects([
-        {
-          id: 1,
-          title: 'Web Development Project',
-          description: 'Build a responsive e-commerce website',
-          status: 'ACTIVE',
-          members: ['John Doe', 'Jane Smith'],
-          maxMembers: 5,
-          deadline: '2024-03-15',
-          createdAt: '2024-01-15',
-          progress: 65
-        },
-        {
-          id: 2,
-          title: 'Mobile App Development',
-          description: 'Create a student management mobile application',
-          status: 'COMPLETED',
-          members: ['Alice Johnson', 'Bob Wilson', 'Carol Brown'],
-          maxMembers: 4,
-          deadline: '2024-02-28',
-          createdAt: '2024-01-10',
-          progress: 100
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/projects', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]);
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch projects');
+      }
+      
+      const projects = await response.json();
+      setProjects(projects);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -82,6 +73,29 @@ const ProjectManagement = () => {
     return matchesSearch && matchesStatus;
   });
 
+  const handleDeleteProject = async (projectId) => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete project');
+      }
+      
+      fetchProjects();
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert('Failed to delete project');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -89,13 +103,6 @@ const ProjectManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Project Management</h2>
           <p className="text-gray-600">Monitor and manage student collaborative projects</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4" />
-          Create Project
-        </button>
       </div>
 
       {/* Filters */}
@@ -184,10 +191,10 @@ const ProjectManagement = () => {
                 >
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                <button 
+                  onClick={() => handleDeleteProject(project.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>

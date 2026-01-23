@@ -8,6 +8,8 @@ const LostFoundManagement = () => {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   useEffect(() => {
     fetchItems();
@@ -16,50 +18,24 @@ const LostFoundManagement = () => {
   const fetchItems = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      setItems([
-        {
-          id: 1,
-          title: 'Black Laptop Bag',
-          description: 'Dell laptop bag with charger inside',
-          type: 'LOST',
-          category: 'Electronics',
-          location: 'Library - 2nd Floor',
-          contactInfo: 'john.doe@university.edu',
-          status: 'ACTIVE',
-          reportedBy: 'John Doe',
-          reportedAt: '2024-01-20',
-          imageUrl: null
-        },
-        {
-          id: 2,
-          title: 'Red Water Bottle',
-          description: 'Stainless steel water bottle with university logo',
-          type: 'FOUND',
-          category: 'Personal Items',
-          location: 'Cafeteria',
-          contactInfo: 'admin@university.edu',
-          status: 'MATCHED',
-          reportedBy: 'Admin',
-          reportedAt: '2024-01-18',
-          imageUrl: null
-        },
-        {
-          id: 3,
-          title: 'Blue Textbook',
-          description: 'Computer Science textbook - Data Structures',
-          type: 'LOST',
-          category: 'Books',
-          location: 'Computer Lab',
-          contactInfo: 'alice.smith@university.edu',
-          status: 'RESOLVED',
-          reportedBy: 'Alice Smith',
-          reportedAt: '2024-01-15',
-          imageUrl: null
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/lost-found', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]);
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch items');
+      }
+      
+      const items = await response.json();
+      setItems(items);
     } catch (error) {
       console.error('Error fetching items:', error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -100,11 +76,87 @@ const LostFoundManagement = () => {
 
   const handleStatusUpdate = async (itemId, newStatus) => {
     try {
-      setItems(items.map(item => 
-        item.id === itemId ? { ...item, status: newStatus } : item
-      ));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update status');
+      }
+      
+      // Refresh items
+      fetchItems();
     } catch (error) {
       console.error('Error updating status:', error);
+      alert(error.message || 'Failed to update status');
+    }
+  };
+
+  const handleDeleteItem = async (itemId) => {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete item');
+      }
+      
+      fetchItems();
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert('Failed to delete item');
+    }
+  };
+
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setEditForm({
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      location: item.location,
+      contactInfo: item.contactInfo
+    });
+  };
+
+  const handleUpdateItem = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/admin/manage/lost-found/${editingItem.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editForm)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update item');
+      }
+      
+      setEditingItem(null);
+      setEditForm({});
+      fetchItems();
+    } catch (error) {
+      console.error('Error updating item:', error);
+      alert('Failed to update item');
     }
   };
 
@@ -114,12 +166,6 @@ const LostFoundManagement = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Lost & Found Management</h2>
           <p className="text-gray-600">Manage lost and found items across campus</p>
-        </div>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            <Plus className="w-4 h-4" />
-            Add Item
-          </button>
         </div>
       </div>
 
@@ -288,10 +334,16 @@ const LostFoundManagement = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg">
+                        <button 
+                          onClick={() => handleEditItem(item)}
+                          className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+                        >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <button 
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -370,6 +422,93 @@ const LostFoundManagement = () => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Item Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold">Edit Item</h2>
+              <button
+                onClick={() => setEditingItem(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateItem} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={editForm.title || ''}
+                  onChange={(e) => setEditForm({...editForm, title: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={editForm.description || ''}
+                  onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 h-20"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={editForm.category || ''}
+                  onChange={(e) => setEditForm({...editForm, category: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Personal Items">Personal Items</option>
+                  <option value="Electronics">Electronics</option>
+                  <option value="Books">Books</option>
+                  <option value="Clothing">Clothing</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input
+                  type="text"
+                  value={editForm.location || ''}
+                  onChange={(e) => setEditForm({...editForm, location: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info</label>
+                <input
+                  type="text"
+                  value={editForm.contactInfo || ''}
+                  onChange={(e) => setEditForm({...editForm, contactInfo: e.target.value})}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingItem(null)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Update Item
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

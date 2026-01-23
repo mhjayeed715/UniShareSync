@@ -17,48 +17,24 @@ const FeedbackManagement = () => {
   const fetchFeedbacks = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      setFeedbacks([
-        {
-          id: 1,
-          title: 'Improve Library WiFi',
-          content: 'The WiFi connection in the library is very slow, especially during peak hours. Students struggle to access online resources.',
-          category: 'Infrastructure',
-          priority: 'HIGH',
-          status: 'PENDING',
-          isAnonymous: true,
-          submittedAt: '2024-01-20',
-          rating: 4,
-          response: null
-        },
-        {
-          id: 2,
-          title: 'Cafeteria Food Quality',
-          content: 'The food quality in the cafeteria has declined recently. More vegetarian options would be appreciated.',
-          category: 'Food Services',
-          priority: 'MEDIUM',
-          status: 'RESPONDED',
-          isAnonymous: false,
-          submittedBy: 'Alice Johnson',
-          submittedAt: '2024-01-18',
-          rating: 3,
-          response: 'Thank you for your feedback. We are working with our food service provider to improve quality and add more vegetarian options.'
-        },
-        {
-          id: 3,
-          title: 'Online Portal Issues',
-          content: 'The student portal is frequently down during registration periods. This causes a lot of inconvenience.',
-          category: 'Technology',
-          priority: 'HIGH',
-          status: 'RESOLVED',
-          isAnonymous: true,
-          submittedAt: '2024-01-15',
-          rating: 2,
-          response: 'We have upgraded our servers and implemented load balancing to prevent future outages during peak times.'
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/feedback', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]);
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch feedback');
+      }
+      
+      const feedbacks = await response.json();
+      setFeedbacks(feedbacks);
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
+      setFeedbacks([]);
     } finally {
       setLoading(false);
     }
@@ -96,37 +72,107 @@ const FeedbackManagement = () => {
     const matchesSearch = feedback.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          feedback.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'all' || feedback.category === categoryFilter;
-    const matchesStatus = statusFilter === 'all' || feedback.status === statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
+    
+    // Handle status filtering
+    if (statusFilter === 'all') {
+      // Show all except archived when "All Status" is selected
+      return matchesSearch && matchesCategory && feedback.status !== 'ARCHIVED';
+    } else {
+      // Show specific status when selected
+      return matchesSearch && matchesCategory && feedback.status === statusFilter;
+    }
+  }).sort((a, b) => {
+    // Sort by status: PENDING first, then others
+    if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+    if (b.status === 'PENDING' && a.status !== 'PENDING') return 1;
+    // Then sort by date (newest first)
+    return new Date(b.submittedAt) - new Date(a.submittedAt);
   });
 
   const handleStatusUpdate = async (feedbackId, newStatus) => {
     try {
-      setFeedbacks(feedbacks.map(feedback => 
-        feedback.id === feedbackId ? { ...feedback, status: newStatus } : feedback
-      ));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update status');
+      }
+      
+      // Refresh feedbacks
+      fetchFeedbacks();
     } catch (error) {
       console.error('Error updating status:', error);
+      alert(error.message || 'Failed to update status');
     }
   };
 
   const handleResponse = async (feedbackId) => {
     try {
-      setFeedbacks(feedbacks.map(feedback => 
-        feedback.id === feedbackId 
-          ? { ...feedback, response: responseText, status: 'RESPONDED' } 
-          : feedback
-      ));
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}/respond`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ response: responseText })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send response');
+      }
+      
+      const result = await response.json();
+      alert(result.message);
+      
       setResponseText('');
       setSelectedFeedback(null);
+      
+      // Refresh feedbacks
+      fetchFeedbacks();
     } catch (error) {
       console.error('Error sending response:', error);
+      alert(error.message || 'Failed to send response');
+    }
+  };
+
+  const handleDeleteFeedback = async (feedbackId) => {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete feedback');
+      }
+      
+      fetchFeedbacks();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      alert('Failed to delete feedback');
     }
   };
 
   const stats = {
     total: feedbacks.length,
-    pending: feedbacks.filter(f => f.status === 'PENDING').length,
+    responded: feedbacks.filter(f => f.status === 'RESPONDED').length,
     avgRating: feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length || 0,
     anonymous: feedbacks.filter(f => f.isAnonymous).length
   };
@@ -156,11 +202,11 @@ const FeedbackManagement = () => {
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-orange-600">{stats.pending}</p>
+              <p className="text-sm text-gray-600">Responded</p>
+              <p className="text-2xl font-bold text-green-600">{stats.responded}</p>
             </div>
-            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-orange-600" />
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <Reply className="w-5 h-5 text-green-600" />
             </div>
           </div>
         </div>
@@ -209,10 +255,12 @@ const FeedbackManagement = () => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           >
             <option value="all">All Categories</option>
+            <option value="General">General</option>
             <option value="Infrastructure">Infrastructure</option>
             <option value="Food Services">Food Services</option>
             <option value="Technology">Technology</option>
             <option value="Academic">Academic</option>
+            <option value="Student Services">Student Services</option>
             <option value="Other">Other</option>
           </select>
           <select
@@ -288,10 +336,15 @@ const FeedbackManagement = () => {
                     >
                       <option value="" disabled>Update Status</option>
                       <option value="RESPONDED">Mark as Responded</option>
-                      <option value="RESOLVED">Mark as Resolved</option>
-                      <option value="ARCHIVED">Archive</option>
                     </select>
                   )}
+                  <button
+                    onClick={() => handleStatusUpdate(feedback.id, 'ARCHIVED')}
+                    className="flex items-center gap-1 px-3 py-1 text-gray-600 hover:bg-gray-50 rounded-lg text-sm"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Archive
+                  </button>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -301,7 +354,7 @@ const FeedbackManagement = () => {
                     <Eye className="w-4 h-4" />
                     View Details
                   </button>
-                  {!feedback.response && (
+                  {!selectedFeedback?.response && (
                     <button
                       onClick={() => {
                         setSelectedFeedback(feedback);
@@ -313,6 +366,12 @@ const FeedbackManagement = () => {
                       Respond
                     </button>
                   )}
+                  <button 
+                    onClick={() => handleDeleteFeedback(feedback.id)}
+                    className="flex items-center gap-1 px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>
