@@ -104,6 +104,68 @@ class ApiClient {
   async delete(endpoint) {
     return this.request(endpoint, 'DELETE');
   }
+
+  // Clubs endpoints
+  async getClubs() {
+    return this.request('/api/clubs/clubs', 'GET');
+  }
+
+  async getClub(id) {
+    return this.request(`/api/clubs/clubs/${id}`, 'GET');
+  }
+
+  async createClub(clubData) {
+    return this.request('/api/clubs/clubs', 'POST', clubData);
+  }
+
+  async updateClub(id, clubData) {
+    return this.request(`/api/clubs/clubs/${id}`, 'PUT', clubData);
+  }
+
+  async deleteClub(id) {
+    return this.request(`/api/clubs/clubs/${id}`, 'DELETE');
+  }
+
+  async joinClub(clubId) {
+    return this.request(`/api/clubs/clubs/${clubId}/join`, 'POST');
+  }
+
+  async getClubRequests(clubId) {
+    return this.request(`/api/clubs/clubs/${clubId}/requests`, 'GET');
+  }
+
+  async handleClubRequest(clubId, memberId, action) {
+    return this.request(`/api/clubs/clubs/${clubId}/requests/${memberId}`, 'PUT', { action });
+  }
+
+  // Events endpoints
+  async getEvents(params = '') {
+    return this.request(`/api/clubs/events${params}`, 'GET');
+  }
+
+  async getEvent(id) {
+    return this.request(`/api/clubs/events/${id}`, 'GET');
+  }
+
+  async createEvent(eventData) {
+    return this.request('/api/clubs/events', 'POST', eventData);
+  }
+
+  async updateEvent(id, eventData) {
+    return this.request(`/api/clubs/events/${id}`, 'PUT', eventData);
+  }
+
+  async deleteEvent(id) {
+    return this.request(`/api/clubs/events/${id}`, 'DELETE');
+  }
+
+  async registerForEvent(eventId) {
+    return this.request(`/api/clubs/events/${eventId}/register`, 'POST');
+  }
+
+  async unregisterFromEvent(eventId) {
+    return this.request(`/api/clubs/events/${eventId}/register`, 'DELETE');
+  }
 }
 
 export default new ApiClient();

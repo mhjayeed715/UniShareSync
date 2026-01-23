@@ -65,12 +65,11 @@ exports.signup = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, rememberMe } = req.body;
 
   try {
     console.log('Login attempt:', email);
     
-    // Test database connection first
     await prisma.$queryRaw`SELECT 1`;
     
     const user = await prisma.user.findUnique({ where: { email } });
@@ -85,24 +84,40 @@ exports.login = async (req, res) => {
 
     console.log('User authenticated:', user.role);
 
-    // Bypass OTP for admin and test accounts
     const testEmails = ['student@test.com', 'faculty@test.com'];
-    if (user.role === 'ADMIN' || testEmails.includes(user.email)) {
+    const isTestAccount = testEmails.includes(user.email);
+    
+    // Check if user can skip OTP (remember me within 24 hours)
+    const canSkipOtp = rememberMe && user.lastLoginSkipOtp && 
+      (new Date() - new Date(user.lastLoginSkipOtp)) < 24 * 60 * 60 * 1000;
+
+    // Bypass OTP for admin, test accounts, or remember me users
+    if (user.role === 'ADMIN' || isTestAccount || canSkipOtp) {
       const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      
+      // Update lastLoginSkipOtp if remember me is checked
+      if (rememberMe) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginSkipOtp: new Date() }
+        });
+      }
+      
       return res.json({
-        message: `${user.role === 'ADMIN' ? 'Admin' : 'Test account'} login successful`,
+        message: `${user.role === 'ADMIN' ? 'Admin' : isTestAccount ? 'Test account' : 'Remember me'} login successful`,
         token,
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          department: user.department,
+          profilePicture: user.profilePicture
         }
       });
     }
 
     console.log('Generating OTP...');
-    // For other users, proceed with OTP
     const otp = crypto.randomInt(100000, 999999).toString();
     await prisma.oTP.create({
       data: {
@@ -139,7 +154,7 @@ exports.login = async (req, res) => {
 
 
 exports.verifyOTP = async (req, res) => {
-  const { userId, otp } = req.body;
+  const { userId, otp, rememberMe } = req.body;
 
   try {
     const otpRecord = await prisma.oTP.findFirst({
@@ -158,6 +173,14 @@ exports.verifyOTP = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // Update lastLoginSkipOtp if remember me is checked
+    if (rememberMe) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { lastLoginSkipOtp: new Date() }
+      });
+    }
+
     await prisma.oTP.delete({ where: { id: otpRecord.id } });
 
     res.json({
@@ -167,7 +190,9 @@ exports.verifyOTP = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        department: user.department,
+        profilePicture: user.profilePicture
       }
     });
   } catch (error) {

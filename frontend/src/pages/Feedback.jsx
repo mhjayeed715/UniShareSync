@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Send, Star, Eye, Filter, X, Clock, CheckCircle, AlertCircle, Lock, Camera, Image } from 'lucide-react';
+import { MessageSquare, Send, Star, Eye, Filter, X, Clock, CheckCircle, AlertCircle, Lock, Camera, Image, Edit, Trash2 } from 'lucide-react';
 
 const Feedback = () => {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -26,53 +26,39 @@ const Feedback = () => {
   const fetchFeedbacks = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      const allFeedbacks = [
-        {
-          id: 1,
-          title: 'Improve Library WiFi',
-          content: 'The WiFi connection in the library is very slow, especially during peak hours. Students struggle to access online resources for research.',
-          category: 'Infrastructure',
-          priority: 'HIGH',
-          status: 'RESPONDED',
-          isAnonymous: false,
-          submittedBy: user.name,
-          submittedAt: '2024-01-20',
-          rating: 4,
-          response: 'Thank you for your feedback. We are upgrading our network infrastructure and expect improvements by next month.'
-        },
-        {
-          id: 2,
-          title: 'Cafeteria Food Quality',
-          content: 'The food quality in the cafeteria has declined recently. More vegetarian options would be appreciated.',
-          category: 'Food Services',
-          priority: 'MEDIUM',
-          status: 'PENDING',
-          isAnonymous: true,
-          submittedBy: 'Anonymous',
-          submittedAt: '2024-01-18',
-          rating: 3,
-          response: null
-        },
-        {
-          id: 3,
-          title: 'Online Portal Issues',
-          content: 'The student portal is frequently down during registration periods. This causes a lot of inconvenience.',
-          category: 'Technology',
-          priority: 'HIGH',
-          status: 'RESOLVED',
-          isAnonymous: false,
-          submittedBy: 'Alice Johnson',
-          submittedAt: '2024-01-15',
-          rating: 2,
-          response: 'We have upgraded our servers and implemented load balancing to prevent future outages during peak times.'
-        }
-      ];
+      const token = localStorage.getItem('token');
       
+      // Fetch all feedback for community view
+      const response = await fetch('http://localhost:5000/api/feedback', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch feedback');
+      }
+      
+      const allFeedbacks = await response.json();
       setFeedbacks(allFeedbacks);
-      setMyFeedbacks(allFeedbacks.filter(f => f.submittedBy === user.name));
+      
+      // Fetch user's feedback
+      const myResponse = await fetch('http://localhost:5000/api/feedback/my-feedback', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (myResponse.ok) {
+        const userFeedbacks = await myResponse.json();
+        setMyFeedbacks(userFeedbacks);
+      }
     } catch (error) {
       console.error('Error fetching feedbacks:', error);
+      setFeedbacks([]);
+      setMyFeedbacks([]);
     } finally {
       setLoading(false);
     }
@@ -120,20 +106,35 @@ const Feedback = () => {
   const handleSubmitFeedback = async (e) => {
     e.preventDefault();
     try {
-      const newFeedback = {
-        id: Date.now(),
-        ...formData,
-        status: 'PENDING',
-        submittedBy: formData.isAnonymous ? 'Anonymous' : user.name,
-        submittedAt: new Date().toISOString().split('T')[0],
-        response: null,
-        imageUrl: formData.image ? URL.createObjectURL(formData.image) : null
-      };
+      const token = localStorage.getItem('token');
+      const formDataToSend = new FormData();
       
-      setFeedbacks([newFeedback, ...feedbacks]);
-      if (!formData.isAnonymous) {
-        setMyFeedbacks([newFeedback, ...myFeedbacks]);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('content', formData.content);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('priority', formData.priority);
+      formDataToSend.append('isAnonymous', formData.isAnonymous);
+      formDataToSend.append('rating', formData.rating);
+      
+      if (formData.image) {
+        formDataToSend.append('image', formData.image);
       }
+      
+      const response = await fetch('http://localhost:5000/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formDataToSend
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to submit feedback');
+      }
+      
+      const result = await response.json();
+      alert(result.message);
       
       // Reset form
       setFormData({
@@ -146,9 +147,85 @@ const Feedback = () => {
         image: null
       });
       
-      alert('Feedback submitted successfully!');
+      // Refresh feedbacks
+      fetchFeedbacks();
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      alert(error.message || 'Failed to submit feedback');
+    }
+  };
+
+  const handleDeleteFeedback = async (feedbackId) => {
+    if (!confirm('Are you sure you want to delete this feedback?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete feedback');
+      }
+      
+      alert('Feedback deleted successfully!');
+      fetchFeedbacks();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      alert('Failed to delete feedback');
+    }
+  };
+
+  const handleArchiveFeedback = async (feedbackId) => {
+    if (!confirm('Are you sure you want to archive this feedback?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}/archive`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to archive feedback');
+      }
+      
+      alert('Feedback archived successfully!');
+      fetchFeedbacks();
+    } catch (error) {
+      console.error('Error archiving feedback:', error);
+      alert('Failed to archive feedback');
+    }
+  };
+
+  const handleResolveFeedback = async (feedbackId) => {
+    if (!confirm('Are you sure this issue has been resolved?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}/resolve`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to resolve feedback');
+      }
+      
+      alert('Feedback marked as resolved!');
+      fetchFeedbacks();
+    } catch (error) {
+      console.error('Error resolving feedback:', error);
+      alert('Failed to resolve feedback');
     }
   };
 
@@ -190,10 +267,10 @@ const Feedback = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Responded</p>
-                <p className="text-2xl font-bold text-green-600">{feedbacks.filter(f => f.status === 'RESPONDED' || f.status === 'RESOLVED').length}</p>
+                <p className="text-2xl font-bold text-yellow-600">{feedbacks.filter(f => f.status === 'RESPONDED').length}</p>
               </div>
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+              <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-yellow-600" />
               </div>
             </div>
           </div>
@@ -362,7 +439,7 @@ const Feedback = () => {
                       </p>
                     </div>
                   ) : (
-                    (activeTab === 'my-feedback' ? myFeedbacks : feedbacks).map(feedback => (
+                    (activeTab === 'my-feedback' ? myFeedbacks.filter(f => f.status !== 'ARCHIVED') : feedbacks).map(feedback => (
                       <div key={feedback.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1">
@@ -414,7 +491,7 @@ const Feedback = () => {
                           </div>
                         )}
                         
-                        <div className="flex justify-end">
+                        <div className="flex justify-between items-center">
                           <button
                             onClick={() => {
                               setSelectedFeedback(feedback);
@@ -425,6 +502,26 @@ const Feedback = () => {
                             <Eye className="w-4 h-4" />
                             View Details
                           </button>
+                          {activeTab === 'my-feedback' && (
+                            <div className="flex gap-2">
+                              {feedback.response && feedback.status === 'RESPONDED' && (
+                                <button
+                                  onClick={() => handleResolveFeedback(feedback.id)}
+                                  className="flex items-center gap-1 px-3 py-1 text-green-600 hover:bg-green-50 rounded-lg text-sm"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                  Mark Resolved
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDeleteFeedback(feedback.id)}
+                                className="flex items-center gap-1 px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Download, Trash2, Filter, Upload, FileText, X } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Download, Trash2, Filter, Upload, FileText, X, Edit } from 'lucide-react';
 import api from '../../api';
 import { parseCSV } from '../../utils/routineParser';
 import courseOfferCSV from '../../assets/Proposed Course Offer Winter 2026 - CSE.csv?raw';
@@ -13,6 +13,8 @@ const ResourceManagement = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedResources, setSelectedResources] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingResource, setEditingResource] = useState(null);
   const [courses, setCourses] = useState([]);
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [semesterCourses, setSemesterCourses] = useState({});
@@ -23,6 +25,12 @@ const ResourceManagement = () => {
     courseName: '',
     type: 'NOTE',
     file: null
+  });
+  const [editData, setEditData] = useState({
+    title: '',
+    description: '',
+    courseName: '',
+    type: 'NOTE'
   });
   const [uploading, setUploading] = useState(false);
 
@@ -73,15 +81,9 @@ const ResourceManagement = () => {
     }
   };
 
-  const getCourseSemester = (courseName) => {
-    if (!courseName) return '8'; // Default to semester 8 for old data
-    const course = courses.find(c => courseName.includes(c.code));
-    return course?.semester || '8';
-  };
-
   const filteredResources = selectedSemester === 'all' 
     ? resources 
-    : resources.filter(r => getCourseSemester(r.courseName || r.course?.courseCode) === selectedSemester);
+    : resources.filter(r => String(r.semester || '8') === String(selectedSemester));
 
   const handleApprove = async (id) => {
     try {
@@ -189,6 +191,49 @@ const ResourceManagement = () => {
     } catch (error) {
       console.error('Upload error:', error);
       alert('Error uploading resource: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEdit = (resource) => {
+    setEditingResource(resource);
+    setEditData({
+      title: resource.title,
+      description: resource.description || '',
+      courseName: resource.courseName || '',
+      type: resource.resourceType || resource.type || 'NOTE'
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateResource = async (e) => {
+    e.preventDefault();
+    
+    try {
+      setUploading(true);
+      const response = await fetch(`http://localhost:5000/api/admin/manage/resources/${editingResource.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(editData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Resource updated successfully!');
+        setShowEditModal(false);
+        setEditingResource(null);
+        fetchResources();
+      } else {
+        alert('Update failed: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      alert('Error updating resource: ' + error.message);
     } finally {
       setUploading(false);
     }
@@ -347,6 +392,13 @@ const ResourceManagement = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(resource)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                         {!resource.isApproved && (
                           <button
                             onClick={() => handleApprove(resource.id)}
@@ -502,6 +554,89 @@ const ResourceManagement = () => {
                   disabled={uploading}
                 >
                   {uploading ? 'Uploading...' : 'Upload'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingResource && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-bold">Edit Resource</h2>
+              <button
+                onClick={() => { setShowEditModal(false); setEditingResource(null); }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateResource}>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Title *</label>
+                  <input
+                    type="text"
+                    value={editData.title}
+                    onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={editData.description}
+                    onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    rows="2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Course Name *</label>
+                  <input
+                    type="text"
+                    value={editData.courseName}
+                    onChange={(e) => setEditData({ ...editData, courseName: e.target.value })}
+                    placeholder="e.g., CSE 3107 - Software Engineering"
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+                  <select
+                    value={editData.type}
+                    onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    required
+                  >
+                    <option value="NOTE">Notes</option>
+                    <option value="ASSIGNMENT">Assignment</option>
+                    <option value="SOLUTION">Solution</option>
+                    <option value="BOOK">Book</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  type="button"
+                  onClick={() => { setShowEditModal(false); setEditingResource(null); }}
+                  className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50"
+                  disabled={uploading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50"
+                  disabled={uploading}
+                >
+                  {uploading ? 'Updating...' : 'Update'}
                 </button>
               </div>
             </form>
