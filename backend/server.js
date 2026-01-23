@@ -55,6 +55,16 @@ const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
+// Add error handling for server
+server.on('error', (err) => {
+  console.error('Server error:', err);
+});
+
+app.use((err, req, res, next) => {
+  console.error('Express error:', err);
+  res.status(500).json({ message: 'Internal server error' });
+});
+
 // Handle graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\nShutting down gracefully...');
