@@ -5,6 +5,7 @@ import UserManagement from '../components/Admin/UserManagement';
 import ResourceManagement from '../components/Admin/ResourceManagement';
 import RoutineScheduler from '../components/Admin/RoutineScheduler';
 import AdminRoutineManager from '../components/Admin/AdminRoutineManager';
+import ClubEventManager from '../components/Admin/ClubEventManager';
 import api from '../api';
 
 const AdminDashboard = () => {
@@ -18,6 +19,54 @@ const AdminDashboard = () => {
   const [activitiesPage, setActivitiesPage] = useState(1);
   const [sortOrder, setSortOrder] = useState('desc');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const [profileData, setProfileData] = useState({ name: user.name, department: user.department });
+  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `http://localhost:5000${user.profilePicture}` : null);
+
+  const handleUpdateProfile = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('name', profileData.name);
+      if (profileData.department) formData.append('department', profileData.department);
+      if (profilePicture) formData.append('profilePicture', profilePicture);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/profile/update', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const res = await response.json();
+      
+      if (res.success) {
+        localStorage.setItem('user', JSON.stringify(res.user));
+        alert('Profile updated successfully!');
+        window.location.reload();
+      }
+    } catch (error) {
+      alert(error.message || 'Failed to update profile');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    try {
+      const res = await api.put('/api/profile/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      if (res.success) {
+        alert('Password changed successfully!');
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      }
+    } catch (error) {
+      alert(error.message || 'Failed to change password');
+    }
+  };
 
   useEffect(() => {
     if (user.role !== 'ADMIN') {
@@ -75,6 +124,7 @@ const AdminDashboard = () => {
     { id: 'feedback', icon: MessageSquare, label: 'Feedback & Support' },
     { id: 'lostfound', icon: Flag, label: 'Lost & Found' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics & Reports' },
+    { id: 'settings', icon: Settings, label: 'Settings' },
   ];
 
   const renderContent = () => {
@@ -82,6 +132,73 @@ const AdminDashboard = () => {
     if (activeSection === 'resources') return <ResourceManagement />;
     if (activeSection === 'notices') return <NoticeManager />;
     if (activeSection === 'scheduler') return <AdminRoutineManager />;
+    if (activeSection === 'events') return <ClubEventManager />;
+    if (activeSection === 'settings') return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">Settings</h2>
+        <div className="bg-white rounded-xl shadow-sm border p-6 space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Profile Information</h3>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl overflow-hidden">
+                  {profilePreview ? (
+                    <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    user.name?.[0]
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Profile Picture</label>
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      setProfilePicture(file);
+                      setProfilePreview(URL.createObjectURL(file));
+                    }
+                  }} className="text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input type="text" value={profileData.name} onChange={(e) => setProfileData({...profileData, name: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input type="email" value={user.email} className="w-full px-4 py-2 border rounded-lg bg-gray-50" disabled />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Role</label>
+                <input type="text" value={user.role} className="w-full px-4 py-2 border rounded-lg bg-gray-50" disabled />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Department</label>
+                <input type="text" value={profileData.department || ''} onChange={(e) => setProfileData({...profileData, department: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <button onClick={handleUpdateProfile} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Update Profile</button>
+            </div>
+          </div>
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Current Password</label>
+                <input type="password" value={passwordData.currentPassword} onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">New Password</label>
+                <input type="password" value={passwordData.newPassword} onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Confirm Password</label>
+                <input type="password" value={passwordData.confirmPassword} onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <button onClick={handleChangePassword} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Change Password</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
     if (activeSection === 'overview') {
       return (
         <div className="space-y-6">
@@ -170,7 +287,7 @@ const AdminDashboard = () => {
       );
     }
     
-    const comingSoon = { events: { icon: Calendar, title: 'Event Management', desc: 'Create and manage campus events, track registrations, and send notifications.', color: 'orange' }, projects: { icon: FolderKanban, title: 'Project Oversight', desc: 'Monitor student projects, track progress, manage team members, and provide support.', color: 'teal' }, feedback: { icon: MessageSquare, title: 'Feedback & Support', desc: 'View and respond to user feedback, handle support requests, and track resolution.', color: 'pink' }, lostfound: { icon: Flag, title: 'Lost & Found', desc: 'Manage lost and found items, help match items with owners, and maintain records.', color: 'yellow' }, analytics: { icon: BarChart3, title: 'Analytics & Reports', desc: 'View detailed analytics, generate reports, and gain insights into platform usage.', color: 'indigo' } };
+    const comingSoon = { projects: { icon: FolderKanban, title: 'Project Oversight', desc: 'Monitor student projects, track progress, manage team members, and provide support.', color: 'teal' }, feedback: { icon: MessageSquare, title: 'Feedback & Support', desc: 'View and respond to user feedback, handle support requests, and track resolution.', color: 'pink' }, lostfound: { icon: Flag, title: 'Lost & Found', desc: 'Manage lost and found items, help match items with owners, and maintain records.', color: 'yellow' }, analytics: { icon: BarChart3, title: 'Analytics & Reports', desc: 'View detailed analytics, generate reports, and gain insights into platform usage.', color: 'indigo' } };
     const section = comingSoon[activeSection];
     if (section) {
       return (
@@ -191,7 +308,7 @@ const AdminDashboard = () => {
       <aside className={`bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white transition-all duration-300 shadow-2xl ${sidebarOpen ? 'w-72' : 'w-20'}`}>
         <div className="h-full flex flex-col">
           <div className="p-5 border-b border-gray-700 flex items-center justify-between">
-            {sidebarOpen && <div className="flex items-center gap-3"><div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center"><Shield className="w-6 h-6" /></div><div><span className="font-bold text-lg">UniShareSync</span><p className="text-xs text-gray-400">Admin Portal</p></div></div>}
+            {sidebarOpen && <div className="flex items-center gap-3"><img src="/unisharesync.png" alt="UniShareSync Logo" className="w-10 h-10 rounded-lg" /><div><span className="font-bold text-lg">UniShareSync</span><p className="text-xs text-gray-400">Admin Portal</p></div></div>}
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-700 rounded-lg transition-colors">{sidebarOpen ? <X size={20} /> : <Menu size={20} />}</button>
           </div>
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -203,8 +320,7 @@ const AdminDashboard = () => {
               </button>
             ))}
           </nav>
-          <div className="p-4 border-t border-gray-700 space-y-2">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-700/50 transition-colors"><Settings size={20} />{sidebarOpen && <span className="text-sm font-medium">Settings</span>}</button>
+          <div className="p-4 border-t border-gray-700">
             <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-600 transition-colors"><LogOut size={20} />{sidebarOpen && <span className="text-sm font-medium">Logout</span>}</button>
           </div>
         </div>
@@ -224,7 +340,13 @@ const AdminDashboard = () => {
                   <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                   <p className="text-xs text-gray-500 flex items-center gap-1"><Shield className="w-3 h-3" />Administrator</p>
                 </div>
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">{user.name?.[0]}</div>
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg overflow-hidden">
+                  {user.profilePicture ? (
+                    <img src={`http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    user.name?.[0]
+                  )}
+                </div>
               </button>
             </div>
           </div>

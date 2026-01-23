@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertCircle, Image as ImageIcon, X, FileText } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 
 const NoticeManager = () => {
@@ -28,7 +28,11 @@ const NoticeManager = () => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
+      if (file.type === 'application/pdf') {
+        setImagePreview('pdf');
+      } else {
+        setImagePreview(URL.createObjectURL(file));
+      }
     }
   };
 
@@ -81,7 +85,13 @@ const NoticeManager = () => {
       content: notice.content,
       priority: notice.priority
     });
-    setImagePreview(notice.imageUrl ? `http://localhost:5000${notice.imageUrl}` : null);
+    if (notice.imageUrl) {
+      if (notice.imageUrl.endsWith('.pdf')) {
+        setImagePreview('pdf');
+      } else {
+        setImagePreview(`http://localhost:5000${notice.imageUrl}`);
+      }
+    }
     setShowForm(true);
   };
 
@@ -141,16 +151,23 @@ const NoticeManager = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Image (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image or PDF (Optional)</label>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,application/pdf"
                 onChange={handleImageChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal"
               />
               {imagePreview && (
                 <div className="mt-2 relative inline-block">
-                  <img src={imagePreview} alt="Preview" className="h-32 rounded-lg" />
+                  {imagePreview === 'pdf' ? (
+                    <div className="flex items-center gap-2 bg-gray-100 p-3 rounded-lg">
+                      <FileText className="w-8 h-8 text-red-600" />
+                      <span className="text-sm font-medium">{imageFile?.name}</span>
+                    </div>
+                  ) : (
+                    <img src={imagePreview} alt="Preview" className="h-32 rounded-lg" />
+                  )}
                   <button
                     type="button"
                     onClick={() => { setImageFile(null); setImagePreview(null); }}
@@ -201,11 +218,18 @@ const NoticeManager = () => {
                 </div>
                 <p className="text-gray-600 mb-2">{notice.content}</p>
                 {notice.imageUrl && (
-                  <img 
-                    src={`http://localhost:5000${notice.imageUrl}`} 
-                    alt={notice.title} 
-                    className="mt-3 rounded-lg max-h-48 object-cover"
-                  />
+                  notice.imageUrl.endsWith('.pdf') ? (
+                    <div className="mt-3 flex items-center gap-2 bg-red-50 p-3 rounded-lg">
+                      <FileText className="w-6 h-6 text-red-600" />
+                      <span className="text-sm font-medium text-red-800">PDF Attachment</span>
+                    </div>
+                  ) : (
+                    <img 
+                      src={`http://localhost:5000${notice.imageUrl}`} 
+                      alt={notice.title} 
+                      className="mt-3 rounded-lg max-h-48 object-cover"
+                    />
+                  )
                 )}
                 <p className="text-sm text-gray-400 mt-2">
                   Posted on {new Date(notice.createdAt).toLocaleDateString()}
