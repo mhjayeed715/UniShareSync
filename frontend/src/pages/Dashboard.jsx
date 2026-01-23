@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Users, Calendar, MessageSquare, 
-  Clock, FileText, AlertCircle, Bell, X, Maximize2 
+  Clock, FileText, AlertCircle, Bell, X, Maximize2
 } from 'lucide-react';
 
 const Dashboard = () => {
@@ -36,8 +36,6 @@ const Dashboard = () => {
       const statsData = await statsRes.json();
       const activitiesData = await activitiesRes.json();
       const noticesData = await noticesRes.json();
-
-      console.log('Notices data:', noticesData);
 
       if (statsData.success) {
         setStats(statsData.stats);

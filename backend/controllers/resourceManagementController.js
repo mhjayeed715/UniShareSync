@@ -96,6 +96,40 @@ exports.bulkAction = async (req, res) => {
   }
 };
 
+// Update resource (admin)
+exports.updateResource = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, courseName, type } = req.body;
+
+    const resource = await prisma.resource.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        courseName,
+        resourceType: type
+      },
+      include: {
+        uploader: { select: { id: true, name: true, email: true } }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Resource updated successfully',
+      data: resource
+    });
+  } catch (error) {
+    console.error('Update resource error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update resource',
+      error: error.message 
+    });
+  }
+};
+
 // Delete resource permanently
 exports.deleteResource = async (req, res) => {
   try {

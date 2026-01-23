@@ -24,10 +24,10 @@ const ClubsEventsPage = () => {
     try {
       setLoading(true);
       if (activeTab === 'events') {
-        const res = await api.get('/api/events?status=upcoming');
+        const res = await api.getEvents('?status=upcoming');
         setEvents(res.data || []);
       } else {
-        const res = await api.get('/api/clubs');
+        const res = await api.getClubs();
         setClubs(res.data || []);
       }
     } catch (error) {
@@ -39,7 +39,7 @@ const ClubsEventsPage = () => {
 
   const fetchPendingRequests = async (clubId) => {
     try {
-      const res = await api.get(`/api/clubs/${clubId}/requests`);
+      const res = await api.getClubRequests(clubId);
       setPendingRequests(res.data || []);
       setSelectedClub(clubId);
     } catch (error) {
@@ -51,7 +51,7 @@ const ClubsEventsPage = () => {
 
   const fetchClubMembers = async (clubId) => {
     try {
-      const res = await api.get(`/api/clubs/${clubId}`);
+      const res = await api.getClub(clubId);
       setClubMembers(res.data?.members || []);
       setShowMembersModal(true);
     } catch (error) {
@@ -62,7 +62,7 @@ const ClubsEventsPage = () => {
 
   const handleRegister = async (eventId) => {
     try {
-      await api.post(`/api/events/${eventId}/register`);
+      await api.registerForEvent(eventId);
       alert('Registered successfully!');
       fetchData();
     } catch (error) {
@@ -72,7 +72,7 @@ const ClubsEventsPage = () => {
 
   const handleJoinClub = async (clubId) => {
     try {
-      await api.post(`/api/clubs/${clubId}/join`);
+      await api.joinClub(clubId);
       alert('Join request submitted!');
     } catch (error) {
       alert(error.message || 'Request failed');
@@ -81,7 +81,7 @@ const ClubsEventsPage = () => {
 
   const handleJoinRequest = async (clubId, memberId, action) => {
     try {
-      await api.put(`/api/clubs/${clubId}/requests/${memberId}`, { action });
+      await api.handleClubRequest(clubId, memberId, action);
       alert(`Request ${action}d successfully!`);
       fetchPendingRequests(clubId);
       fetchData();
@@ -94,7 +94,7 @@ const ClubsEventsPage = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     try {
-      await api.post('/api/events', {
+      await api.createEvent({
         title: formData.get('title'),
         description: formData.get('description'),
         clubId: formData.get('clubId') || null,
@@ -116,7 +116,7 @@ const ClubsEventsPage = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     try {
-      await api.post('/api/clubs', {
+      await api.createClub({
         name: formData.get('name'),
         description: formData.get('description')
       });

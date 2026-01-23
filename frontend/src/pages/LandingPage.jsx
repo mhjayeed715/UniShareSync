@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle, Bell } from 'lucide-react';
+import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle, Bell, X } from 'lucide-react';
 import { Hero } from '../components/ui/animated-hero';
 
 const LandingPage = ({ onNavigate }) => {
@@ -13,6 +13,9 @@ const LandingPage = ({ onNavigate }) => {
   const fetchNotices = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/notices/public');
+      if (!response.ok) {
+        throw new Error('Failed to fetch notices');
+      }
       const data = await response.json();
       setNotices(data.notices || []);
     } catch (error) {

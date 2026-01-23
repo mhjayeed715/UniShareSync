@@ -3,6 +3,11 @@ const prisma = require('../config/prisma');
 // Get all public notices (for landing page)
 exports.getPublicNotices = async (req, res) => {
   try {
+    console.log('Fetching public notices...');
+    
+    // Test database connection first
+    await prisma.$queryRaw`SELECT 1`;
+    
     const notices = await prisma.notice.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -15,9 +20,13 @@ exports.getPublicNotices = async (req, res) => {
         }
       }
     });
-
+    console.log('Found notices:', notices.length);
     res.json({ notices });
   } catch (error) {
+    console.error('Public notices error:', error);
+    if (error.code === 'P2021' || error.message.includes('does not exist')) {
+      return res.json({ notices: [], message: 'Notice table not found' });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

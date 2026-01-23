@@ -25,6 +25,7 @@ router.delete('/users/:id', userController.deleteUser);
 
 // Resource Management Routes
 router.get('/resources', resourceController.getAllResources);
+router.put('/resources/:id', resourceController.updateResource);
 router.put('/resources/:id/approve', resourceController.approveResource);
 router.post('/resources/bulk-action', resourceController.bulkAction);
 router.delete('/resources/:id', resourceController.deleteResource);
@@ -56,6 +57,8 @@ router.delete('/feedback/:id', feedbackController.deleteFeedback);
 // Lost & Found Management Routes
 router.get('/lost-found', lostFoundController.getAllItems);
 router.get('/lost-found/:id', lostFoundController.getItem);
+router.post('/lost-found', lostFoundController.createItem);
+router.put('/lost-found/:id', lostFoundController.updateItem);
 router.put('/lost-found/:id/status', lostFoundController.updateItemStatus);
 router.delete('/lost-found/:id', lostFoundController.deleteItem);
 router.get('/lost-found/matches', lostFoundController.findMatches);
