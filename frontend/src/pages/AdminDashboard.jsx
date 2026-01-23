@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, BookOpen, Calendar, Users, Search, Bell, Settings, LogOut, Menu, X, MessageSquare, Flag, FolderKanban, Megaphone, TrendingUp, TrendingDown, Clock, Activity, CheckCircle, UserPlus, FileText, BarChart3, Database, Shield, Award } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LayoutDashboard, BookOpen, Calendar, Users, Bell, Settings, LogOut, Menu, X, MessageSquare, Flag, FolderKanban, Megaphone, TrendingUp, TrendingDown, Clock, Activity, CheckCircle, UserPlus, FileText, BarChart3, Database, Shield, CalendarClock } from 'lucide-react';
 import NoticeManager from '../components/Admin/NoticeManager';
 import UserManagement from '../components/Admin/UserManagement';
 import ResourceManagement from '../components/Admin/ResourceManagement';
+import RoutineScheduler from '../components/Admin/RoutineScheduler';
+import AdminRoutineManager from '../components/Admin/AdminRoutineManager';
 import api from '../api';
 
 const AdminDashboard = () => {
@@ -12,12 +13,15 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState([]);
-  const navigate = useNavigate();
+  const [showActivitiesModal, setShowActivitiesModal] = useState(false);
+  const [allActivities, setAllActivities] = useState([]);
+  const [activitiesPage, setActivitiesPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState('desc');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
     if (user.role !== 'ADMIN') {
-      navigate('/dashboard');
+      window.location.href = '/dashboard';
       return;
     }
     fetchDashboardData();
@@ -28,12 +32,11 @@ const AdminDashboard = () => {
       setLoading(true);
       const statsResponse = await api.getDashboardStats();
       setStats(statsResponse.stats);
-      setRecentActivities([
-        { id: 1, user: 'John Doe', action: 'uploaded a resource', time: '5 min ago', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
-        { id: 2, user: 'Jane Smith', action: 'registered for event', time: '15 min ago', icon: Calendar, color: 'text-green-600', bg: 'bg-green-50' },
-        { id: 3, user: 'Mike Johnson', action: 'submitted feedback', time: '1 hour ago', icon: MessageSquare, color: 'text-purple-600', bg: 'bg-purple-50' },
-        { id: 4, user: 'Sarah Wilson', action: 'created project', time: '2 hours ago', icon: FolderKanban, color: 'text-orange-600', bg: 'bg-orange-50' },
-      ]);
+      
+      const activitiesResponse = await api.getRecentActivities();
+      const activities = activitiesResponse.activities || [];
+      setRecentActivities(activities.slice(0, 5));
+      setAllActivities(activities);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       setStats({ students: { value: '0', change: '0%', trend: 'up' }, faculty: { value: '0', change: '0%', trend: 'up' }, resources: { value: '0', change: '0%', trend: 'up' }, events: { value: '0', change: '0%', trend: 'up' }, projects: { value: '0', change: '0%', trend: 'up' }, feedback: { value: '0', change: '0%', trend: 'up' } });
@@ -45,14 +48,28 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/');
+    window.location.href = '/';
   };
+
+  const getSortedActivities = () => {
+    const sorted = [...allActivities].sort((a, b) => {
+      if (sortOrder === 'desc') {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      }
+      return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+    });
+    const start = (activitiesPage - 1) * 10;
+    return sorted.slice(start, start + 10);
+  };
+
+  const totalPages = Math.ceil(allActivities.length / 10);
 
   const menuItems = [
     { id: 'overview', icon: LayoutDashboard, label: 'Dashboard Overview' },
     { id: 'users', icon: Users, label: 'User Management' },
-    { id: 'resources', icon: BookOpen, label: 'Resource Management', badge: 'new' },
+    { id: 'resources', icon: BookOpen, label: 'Resource Management' },
     { id: 'notices', icon: Megaphone, label: 'Notice Board' },
+    { id: 'scheduler', icon: CalendarClock, label: 'Routine & Scheduler' },
     { id: 'events', icon: Calendar, label: 'Event Management' },
     { id: 'projects', icon: FolderKanban, label: 'Project Oversight' },
     { id: 'feedback', icon: MessageSquare, label: 'Feedback & Support' },
@@ -64,6 +81,7 @@ const AdminDashboard = () => {
     if (activeSection === 'users') return <UserManagement />;
     if (activeSection === 'resources') return <ResourceManagement />;
     if (activeSection === 'notices') return <NoticeManager />;
+    if (activeSection === 'scheduler') return <AdminRoutineManager />;
     if (activeSection === 'overview') {
       return (
         <div className="space-y-6">
@@ -71,7 +89,7 @@ const AdminDashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">Welcome back, {user.name}! 👋</h1>
-                <p className="text-indigo-100 text-lg">Here's what's happening in your platform today</p>
+                <p className="text-indigo-100 text-lg">Here's what's happening in the platform today</p>
               </div>
               <div className="hidden md:block"><Shield className="w-24 h-24 opacity-20" /></div>
             </div>
@@ -119,29 +137,33 @@ const AdminDashboard = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><Clock className="w-6 h-6 text-indigo-600" />Recent Activity</h2>
-              <div className="space-y-4">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className={`p-2 rounded-lg ${activity.bg} flex-shrink-0`}><activity.icon className={`w-4 h-4 ${activity.color}`} /></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900"><span className="font-semibold">{activity.user}</span> {activity.action}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Clock className="w-6 h-6 text-indigo-600" />Recent Activity</h2>
+                <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} className="text-sm border rounded-lg px-3 py-1">
+                  <option value="desc">Newest First</option>
+                  <option value="asc">Oldest First</option>
+                </select>
               </div>
-              <button className="w-full mt-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">View All Activity</button>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><Award className="w-6 h-6 text-indigo-600" />System Status</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg"><CheckCircle className="w-6 h-6 text-green-600" /><div><p className="text-sm font-medium text-gray-600">Server Status</p><p className="text-lg font-bold text-gray-900">Online</p></div></div>
-              <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-lg"><Database className="w-6 h-6 text-blue-600" /><div><p className="text-sm font-medium text-gray-600">Database</p><p className="text-lg font-bold text-gray-900">Connected</p></div></div>
-              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-lg"><Activity className="w-6 h-6 text-purple-600" /><div><p className="text-sm font-medium text-gray-600">Active Users</p><p className="text-lg font-bold text-gray-900">142</p></div></div>
-              <div className="flex items-center gap-3 p-4 bg-orange-50 rounded-lg"><Clock className="w-6 h-6 text-orange-600" /><div><p className="text-sm font-medium text-gray-600">Uptime</p><p className="text-lg font-bold text-gray-900">99.9%</p></div></div>
+              <div className="space-y-4">
+                {recentActivities.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4">No recent activities</p>
+                ) : (
+                  recentActivities.map((activity) => {
+                    const iconMap = { 'Megaphone': Megaphone, 'Upload': FileText, 'Flag': FolderKanban, 'Calendar': Calendar };
+                    const Icon = iconMap[activity.icon] || FileText;
+                    return (
+                      <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className={`p-2 rounded-lg ${activity.bg} flex-shrink-0`}><Icon className={`w-4 h-4 ${activity.color}`} /></div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-900"><span className="font-semibold">{activity.user}</span> {activity.action}</p>
+                          <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <button onClick={() => setShowActivitiesModal(true)} className="w-full mt-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">View All Activity</button>
             </div>
           </div>
         </div>
@@ -191,15 +213,19 @@ const AdminDashboard = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex-1 max-w-xl">
-              <div className="relative"><Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} /><input type="text" placeholder="Search users, resources, events..." className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" /></div>
-            </div>
-            <div className="flex items-center gap-4 ml-4">
-              <button className="relative p-2.5 hover:bg-gray-100 rounded-xl transition-colors"><Bell size={20} className="text-gray-600" /><span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span></button>
-              <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                <div className="text-right"><p className="text-sm font-semibold text-gray-900">{user.name}</p><p className="text-xs text-gray-500 flex items-center gap-1"><Shield className="w-3 h-3" />Administrator</p></div>
+            <h2 className="text-xl font-bold text-gray-900">Admin Dashboard</h2>
+            <div className="flex items-center gap-4">
+              <button className="relative p-2.5 hover:bg-gray-100 rounded-xl transition-colors">
+                <Bell size={20} className="text-gray-600" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+              </button>
+              <button onClick={handleLogout} className="flex items-center gap-3 pl-4 border-l border-gray-200 hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                  <p className="text-xs text-gray-500 flex items-center gap-1"><Shield className="w-3 h-3" />Administrator</p>
+                </div>
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">{user.name?.[0]}</div>
-              </div>
+              </button>
             </div>
           </div>
         </header>
@@ -212,6 +238,42 @@ const AdminDashboard = () => {
           ) : renderContent()}
         </main>
       </div>
+
+      {/* Activities Modal */}
+      {showActivitiesModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">All Activities</h2>
+              <button onClick={() => setShowActivitiesModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(80vh-180px)]">
+              <div className="space-y-3">
+                {getSortedActivities().map((activity) => {
+                  const iconMap = { 'Megaphone': Megaphone, 'Upload': FileText, 'Flag': FolderKanban, 'Calendar': Calendar };
+                  const Icon = iconMap[activity.icon] || FileText;
+                  return (
+                    <div key={activity.id} className="flex items-start gap-3 p-4 rounded-lg border hover:bg-gray-50">
+                      <div className={`p-2 rounded-lg ${activity.bg} flex-shrink-0`}><Icon className={`w-5 h-5 ${activity.color}`} /></div>
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-900"><span className="font-semibold">{activity.user}</span> {activity.action}</p>
+                        <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="p-4 border-t flex items-center justify-between">
+              <button onClick={() => setActivitiesPage(p => Math.max(1, p - 1))} disabled={activitiesPage === 1} className="px-4 py-2 border rounded-lg disabled:opacity-50">Previous</button>
+              <span className="text-sm text-gray-600">Page {activitiesPage} of {totalPages}</span>
+              <button onClick={() => setActivitiesPage(p => Math.min(totalPages, p + 1))} disabled={activitiesPage === totalPages} className="px-4 py-2 border rounded-lg disabled:opacity-50">Next</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

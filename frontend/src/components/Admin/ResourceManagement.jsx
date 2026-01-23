@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, CheckCircle, XCircle, Download, Trash2, Filter, Upload, FileText, X } from 'lucide-react';
 import api from '../../api';
+import { parseCSV } from '../../utils/routineParser';
+import courseOfferCSV from '../../assets/Proposed Course Offer Winter 2026 - CSE.csv?raw';
 
 const ResourceManagement = () => {
   const [resources, setResources] = useState([]);
@@ -12,9 +14,12 @@ const ResourceManagement = () => {
   const [selectedResources, setSelectedResources] = useState([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [courses, setCourses] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState('all');
+  const [semesterCourses, setSemesterCourses] = useState({});
   const [uploadData, setUploadData] = useState({
     title: '',
     description: '',
+    semester: '',
     courseName: '',
     type: 'NOTE',
     file: null
@@ -22,19 +27,37 @@ const ResourceManagement = () => {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
+    loadCoursesFromCSV();
     fetchResources();
-    fetchCourses();
-  }, [currentPage, statusFilter, searchTerm]);
+  }, [currentPage, statusFilter, searchTerm, selectedSemester]);
 
-  const fetchCourses = async () => {
-    try {
-      const response = await api.get('/api/admin/manage/courses');
-      if (response.success) {
-        setCourses(response.data);
+  const loadCoursesFromCSV = () => {
+    const lines = courseOfferCSV.trim().split('\n').map(l => l.replace(/\r/g, ''));
+    const semesterMap = { '8': [] }; // Default semester for old data
+    const allCourses = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      const semester = values[1];
+      const courseCode = values[2];
+      const courseTitle = values[3];
+
+      if (semester && courseCode && courseTitle && !courseTitle.includes('Total')) {
+        const semKey = semester.replace(/st|nd|rd|th/g, '').trim();
+        if (!semesterMap[semKey]) semesterMap[semKey] = [];
+        
+        const courseInfo = { code: courseCode, title: courseTitle, semester: semKey };
+        const exists = semesterMap[semKey].find(c => c.code === courseCode);
+        if (!exists) {
+          semesterMap[semKey].push(courseInfo);
+          allCourses.push(courseInfo);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching courses:', error);
     }
+
+    console.log('Loaded semesters:', Object.keys(semesterMap));
+    setSemesterCourses(semesterMap);
+    setCourses(allCourses);
   };
 
   const fetchResources = async () => {
@@ -49,6 +72,16 @@ const ResourceManagement = () => {
       setLoading(false);
     }
   };
+
+  const getCourseSemester = (courseName) => {
+    if (!courseName) return '8'; // Default to semester 8 for old data
+    const course = courses.find(c => courseName.includes(c.code));
+    return course?.semester || '8';
+  };
+
+  const filteredResources = selectedSemester === 'all' 
+    ? resources 
+    : resources.filter(r => getCourseSemester(r.courseName || r.course?.courseCode) === selectedSemester);
 
   const handleApprove = async (id) => {
     try {
@@ -123,6 +156,7 @@ const ResourceManagement = () => {
       formData.append('file', uploadData.file);
       formData.append('title', uploadData.title);
       formData.append('description', uploadData.description);
+      formData.append('semester', uploadData.semester);
       formData.append('courseName', uploadData.courseName);
       formData.append('type', uploadData.type);
 
@@ -164,6 +198,7 @@ const ResourceManagement = () => {
     setUploadData({
       title: '',
       description: '',
+      semester: '',
       courseName: '',
       type: 'NOTE',
       file: null
@@ -222,6 +257,16 @@ const ResourceManagement = () => {
             </div>
           </div>
           <select
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Semesters</option>
+            {Object.keys(semesterCourses).sort((a, b) => parseInt(a) - parseInt(b)).map(sem => (
+              <option key={sem} value={sem}>Semester {sem}</option>
+            ))}
+          </select>
+          <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -260,12 +305,12 @@ const ResourceManagement = () => {
                 <tr>
                   <td colSpan="7" className="px-6 py-4 text-center text-gray-500">Loading...</td>
                 </tr>
-              ) : resources.length === 0 ? (
+              ) : filteredResources.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="px-6 py-4 text-center text-gray-500">No resources found</td>
                 </tr>
               ) : (
-                resources.map(resource => (
+                filteredResources.map(resource => (
                   <tr key={resource.id} className="hover:bg-gray-50">
                     <td className="px-4 py-4">
                       <input
@@ -351,10 +396,10 @@ const ResourceManagement = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Upload Resource</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-bold">Upload Resource</h2>
               <button
                 onClick={() => { setShowUploadModal(false); resetUploadForm(); }}
                 className="text-gray-500 hover:text-gray-700"
@@ -363,93 +408,97 @@ const ResourceManagement = () => {
               </button>
             </div>
             <form onSubmit={handleUploadResource}>
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Title *</label>
                   <input
                     type="text"
                     value={uploadData.title}
                     onChange={(e) => setUploadData({ ...uploadData, title: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
                   <textarea
                     value={uploadData.description}
                     onChange={(e) => setUploadData({ ...uploadData, description: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                    rows="3"
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    rows="2"
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Semester *</label>
+                    <select
+                      value={uploadData.semester}
+                      onChange={(e) => setUploadData({ ...uploadData, semester: e.target.value, courseName: '' })}
+                      className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      required
+                    >
+                      <option value="">Select</option>
+                      {Object.keys(semesterCourses).sort((a, b) => parseInt(a) - parseInt(b)).map(sem => (
+                        <option key={sem} value={sem}>Sem {sem}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Type *</label>
+                    <select
+                      value={uploadData.type}
+                      onChange={(e) => setUploadData({ ...uploadData, type: e.target.value })}
+                      className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      required
+                    >
+                      <option value="NOTE">Notes</option>
+                      <option value="ASSIGNMENT">Assignment</option>
+                      <option value="SOLUTION">Solution</option>
+                      <option value="BOOK">Book</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Course Name *</label>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Course Code *</label>
                   <input
                     type="text"
                     value={uploadData.courseName}
                     onChange={(e) => setUploadData({ ...uploadData, courseName: e.target.value })}
-                    placeholder="Enter course name (e.g., CSE 3297 - Software Engineering)"
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="e.g., CSE 3107 - Software Engineering"
+                    className="w-full px-2 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    list="courseList"
                     required
                   />
+                  <datalist id="courseList">
+                    {uploadData.semester && semesterCourses[uploadData.semester]?.map(course => (
+                      <option key={course.code} value={`${course.code} - ${course.title}`} />
+                    ))}
+                  </datalist>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Resource Type *</label>
-                  <select
-                    value={uploadData.type}
-                    onChange={(e) => setUploadData({ ...uploadData, type: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  <label className="block text-xs font-medium text-gray-700 mb-1">File * (Max 10MB)</label>
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    className="w-full text-sm border rounded-lg p-2 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     required
-                  >
-                    <option value="NOTE">Notes</option>
-                    <option value="ASSIGNMENT">Assignment</option>
-                    <option value="SOLUTION">Solution</option>
-                    <option value="BOOK">Book</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">File * (Max 10MB)</label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-indigo-500 transition-colors">
-                    <div className="space-y-1 text-center">
-                      <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500">
-                          <span>Upload a file</span>
-                          <input
-                            type="file"
-                            onChange={handleFileChange}
-                            className="sr-only"
-                            required
-                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.jpg,.jpeg,.png,.gif"
-                          />
-                        </label>
-                      </div>
-                      <p className="text-xs text-gray-500">
-                        PDF, DOC, XLS, PPT, Images, Archives
-                      </p>
-                      {uploadData.file && (
-                        <p className="text-sm text-green-600 font-medium">
-                          Selected: {uploadData.file.name}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.jpg,.jpeg,.png,.gif"
+                  />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex justify-end gap-2 mt-4">
                 <button
                   type="button"
                   onClick={() => { setShowUploadModal(false); resetUploadForm(); }}
-                  className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50"
                   disabled={uploading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50"
                   disabled={uploading}
                 >
                   {uploading ? 'Uploading...' : 'Upload'}
