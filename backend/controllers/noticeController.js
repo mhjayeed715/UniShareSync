@@ -48,15 +48,20 @@ exports.createNotice = async (req, res) => {
   const { title, content, priority } = req.body;
 
   try {
+    console.log('Create notice request:', { title, content, priority, hasFile: !!req.file, userId: req.user?.id });
+    
     if (req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Only admins can create notices' });
     }
+
+    const imageUrl = req.file ? `/uploads/notices/${req.file.filename}` : null;
 
     const notice = await prisma.notice.create({
       data: {
         title,
         content,
         priority: priority || 'NORMAL',
+        imageUrl,
         createdBy: req.user.id
       },
       include: {
@@ -71,6 +76,7 @@ exports.createNotice = async (req, res) => {
 
     res.status(201).json({ message: 'Notice created successfully', notice });
   } catch (error) {
+    console.error('Create notice error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -85,13 +91,14 @@ exports.updateNotice = async (req, res) => {
       return res.status(403).json({ message: 'Only admins can update notices' });
     }
 
+    const updateData = { title, content, priority };
+    if (req.file) {
+      updateData.imageUrl = `/uploads/notices/${req.file.filename}`;
+    }
+
     const notice = await prisma.notice.update({
       where: { id },
-      data: {
-        title,
-        content,
-        priority
-      },
+      data: updateData,
       include: {
         author: {
           select: {

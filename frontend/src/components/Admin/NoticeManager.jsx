@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 
 const NoticeManager = () => {
@@ -11,6 +11,8 @@ const NoticeManager = () => {
     content: '',
     priority: 'NORMAL'
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const { request, loading } = useApi();
 
   useEffect(() => {
@@ -22,19 +24,47 @@ const NoticeManager = () => {
     if (data) setNotices(data.notices);
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingNotice) {
-      await request(`/api/notices/${editingNotice.id}`, 'PUT', formData);
-    } else {
-      await request('/api/notices', 'POST', formData);
+    const formDataToSend = new FormData();
+    formDataToSend.append('title', formData.title);
+    formDataToSend.append('content', formData.content);
+    formDataToSend.append('priority', formData.priority);
+    if (imageFile) {
+      formDataToSend.append('image', imageFile);
     }
     
-    setFormData({ title: '', content: '', priority: 'NORMAL' });
-    setShowForm(false);
-    setEditingNotice(null);
-    fetchNotices();
+    console.log('Submitting notice:', { title: formData.title, priority: formData.priority, hasImage: !!imageFile });
+    
+    let result;
+    if (editingNotice) {
+      result = await request(`/api/notices/${editingNotice.id}`, 'PUT', formDataToSend, true);
+    } else {
+      result = await request('/api/notices', 'POST', formDataToSend, true);
+    }
+    
+    console.log('API result:', result);
+    
+    if (result) {
+      alert('Notice saved successfully!');
+      setFormData({ title: '', content: '', priority: 'NORMAL' });
+      setImageFile(null);
+      setImagePreview(null);
+      setShowForm(false);
+      setEditingNotice(null);
+      fetchNotices();
+    } else {
+      alert('Failed to save notice. Check console for details.');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -51,6 +81,7 @@ const NoticeManager = () => {
       content: notice.content,
       priority: notice.priority
     });
+    setImagePreview(notice.imageUrl ? `http://localhost:5000${notice.imageUrl}` : null);
     setShowForm(true);
   };
 
@@ -63,6 +94,8 @@ const NoticeManager = () => {
             setShowForm(true);
             setEditingNotice(null);
             setFormData({ title: '', content: '', priority: 'NORMAL' });
+            setImageFile(null);
+            setImagePreview(null);
           }}
           className="flex items-center gap-2 bg-brand-teal text-white px-4 py-2 rounded-lg hover:bg-teal-600"
         >
@@ -107,6 +140,27 @@ const NoticeManager = () => {
                 <option value="HIGH">High</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image (Optional)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal"
+              />
+              {imagePreview && (
+                <div className="mt-2 relative inline-block">
+                  <img src={imagePreview} alt="Preview" className="h-32 rounded-lg" />
+                  <button
+                    type="button"
+                    onClick={() => { setImageFile(null); setImagePreview(null); }}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 type="submit"
@@ -120,6 +174,8 @@ const NoticeManager = () => {
                 onClick={() => {
                   setShowForm(false);
                   setEditingNotice(null);
+                  setImageFile(null);
+                  setImagePreview(null);
                 }}
                 className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
               >
@@ -144,7 +200,14 @@ const NoticeManager = () => {
                   )}
                 </div>
                 <p className="text-gray-600 mb-2">{notice.content}</p>
-                <p className="text-sm text-gray-400">
+                {notice.imageUrl && (
+                  <img 
+                    src={`http://localhost:5000${notice.imageUrl}`} 
+                    alt={notice.title} 
+                    className="mt-3 rounded-lg max-h-48 object-cover"
+                  />
+                )}
+                <p className="text-sm text-gray-400 mt-2">
                   Posted on {new Date(notice.createdAt).toLocaleDateString()}
                 </p>
               </div>
