@@ -6,6 +6,9 @@ import ResourceManagement from '../components/Admin/ResourceManagement';
 import RoutineScheduler from '../components/Admin/RoutineScheduler';
 import AdminRoutineManager from '../components/Admin/AdminRoutineManager';
 import ClubEventManager from '../components/Admin/ClubEventManager';
+import ProjectManagement from '../components/Admin/ProjectManagement';
+import LostFoundManagement from '../components/Admin/LostFoundManagement';
+import FeedbackManagement from '../components/Admin/FeedbackManagement';
 import api from '../api';
 
 const AdminDashboard = () => {
@@ -133,6 +136,9 @@ const AdminDashboard = () => {
     if (activeSection === 'notices') return <NoticeManager />;
     if (activeSection === 'scheduler') return <AdminRoutineManager />;
     if (activeSection === 'events') return <ClubEventManager />;
+    if (activeSection === 'projects') return <ProjectManagement />;
+    if (activeSection === 'lostfound') return <LostFoundManagement />;
+    if (activeSection === 'feedback') return <FeedbackManagement />;
     if (activeSection === 'settings') return (
       <div className="space-y-6">
         <h2 className="text-2xl font-bold">Settings</h2>
@@ -287,7 +293,7 @@ const AdminDashboard = () => {
       );
     }
     
-    const comingSoon = { projects: { icon: FolderKanban, title: 'Project Oversight', desc: 'Monitor student projects, track progress, manage team members, and provide support.', color: 'teal' }, feedback: { icon: MessageSquare, title: 'Feedback & Support', desc: 'View and respond to user feedback, handle support requests, and track resolution.', color: 'pink' }, lostfound: { icon: Flag, title: 'Lost & Found', desc: 'Manage lost and found items, help match items with owners, and maintain records.', color: 'yellow' }, analytics: { icon: BarChart3, title: 'Analytics & Reports', desc: 'View detailed analytics, generate reports, and gain insights into platform usage.', color: 'indigo' } };
+    const comingSoon = { analytics: { icon: BarChart3, title: 'Analytics & Reports', desc: 'View detailed analytics, generate reports, and gain insights into platform usage.', color: 'indigo' } };
     const section = comingSoon[activeSection];
     if (section) {
       return (
