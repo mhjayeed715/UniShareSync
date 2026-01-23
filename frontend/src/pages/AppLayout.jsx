@@ -7,6 +7,9 @@ import Dashboard from './Dashboard';
 import CourseResourcesPage from './CourseResourcesPage';
 import ClubsEventsPage from './ClubsEventsPage';
 import RoutineViewer from './RoutineViewer';
+import Projects from './Projects';
+import LostFound from './LostFound';
+import Feedback from './Feedback';
 import api from '../api';
 
 const AppLayout = ({ onLogout }) => {
@@ -72,7 +75,8 @@ const AppLayout = ({ onLogout }) => {
     { icon: Users, label: 'Clubs & Events' },
     { icon: FolderKanban, label: 'Projects' },
     { icon: Calendar, label: 'Scheduler' },
-    { icon: MessageSquare, label: 'Lost & Found' },
+    { icon: Search, label: 'Lost & Found' },
+    { icon: MessageSquare, label: 'Feedback' },
   ];
 
   const renderContent = () => {
@@ -154,8 +158,14 @@ const AppLayout = ({ onLogout }) => {
         return <CourseResourcesPage />;
       case 'Clubs & Events':
         return <ClubsEventsPage />;
+      case 'Projects':
+        return <Projects />;
       case 'Scheduler':
         return <RoutineViewer />;
+      case 'Lost & Found':
+        return <LostFound />;
+      case 'Feedback':
+        return <Feedback />;
       default:
         return (
           <div className="flex items-center justify-center h-full text-gray-400">
