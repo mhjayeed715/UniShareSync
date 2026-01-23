@@ -1,0 +1,172 @@
+Batch,Semester,Course Code,Course Title,Credit,Credit Hour,Section
+38th,1st,CSE 1100,Computer Fundamentals and Ethics,1.5,1.5,A
+,,,,,1.5,B
+,,CSE 1101,Structured Programming,3,3,A
+,,,,,3,B
+,,CSE 1102,Structured Programming Sessional,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,MAT 1101,Calculus and Co-ordinate Geometry,3,3,A
+,,,,,3,B
+,,ECA 1101,Economics and Accounting,3,3,A
+,,,,,3,B
+,,BDS 1101,Bangladesh Studies,3,3,A
+,,,,,3,B
+,,PHY 1101,Physics,3,3,A
+,,,,,3,B
+,,PHY 1102,Physics Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,,,,1.5,B1
+,,,,,1.5,B2
+,,,Total,18.75,51,20
+,,,,,,
+37th,2nd,CSE 1201,Data Structure,3,3,A
+,,,,,3,B
+,,CSE 1202,Data Structure Sessional,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,EEE 1101,Electrical Circuits,3,3,A
+,,,,,3,B
+,,EEE 1102,Electrical Circuits Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,,,,1.5,B1
+,,,,,1.5,B2
+,,CSE 1203,Object Oriented Programming,3,3,A
+,,,,,3,B
+,,CSE 1204,Object Oriented Programming Sessional,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,MAT 1203,Vector Analysis and Linear Algebra,3,3,A
+,,,,,3,B
+,,ECS 1203,English Communication Skills-II,2,3,A
+,,,,,3,B
+,,CSE 1210,Competitive Programming Sessional-I,1.5,3,A
+,,,,,3,B
+,,,Total,19.25,66,24
+,,,,,,
+36th,3rd,CSE 2100,Software Development Project-I,1.5,3,A1
+,,,,,3,A2
+,,CSE 2101,Python Programming Language,3,3,A
+,,CSE 2102,Python Programming Language Sessional,1.5,3,A1
+,,,,,3,A2
+,,BCC 2101,Biology and Chemistry in Computation,3,3,A
+,,EEE 2103,Digital Logic Design,3,3,A
+,,EEE 2104,Digital Logic Design Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,CSE 2103,Discrete Mathematics,3,3,A
+,,MAT 2105,"Complex Variable, Differential Equation and Harmonic Analysis",3,3,A
+,,CSE 2110,Competitive Programming Sessional-II,1.5,3,A1
+,,,,,3,A2
+,,,Total,20.25,36,13
+,,,,,,
+35th,4th,CSE 2200,Web (Front End) Development Project,1.5,3,A
+,,,,,3,B
+,,CSE 2201,Design and Analysis of Algorithms,3,3,A
+,,,,,3,B
+,,CSE 2202,Design and Analysis of Algorithms Sessional,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,EEE 2205,Electronic Device and Circuits,3,3,A
+,,,,,3,B
+,,EEE 2206,Electronic Device and Circuits Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,,,,1.5,B1
+,,,,,1.5,B2
+,,MAT 2207,Numerical Methods,3,3,A
+,,,,,3,B
+,,MAT 2208,Numerical Methods Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,,,,1.5,B1
+,,,,,1.5,B2
+,,CSE 2207,Database Management System,3,3,A
+,,,,,3,B
+,,CSE 2208,Database Management System Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,,,,1.5,B1
+,,,,,1.5,B2
+,,CSE 2209,Artificial Intelligence,3,3,A
+,,,,,3,B
+,,,Total,20.25,66,28
+,,,,,,
+34th,5th,CSE 3100,Web (Back End) Development Project,1.5,3,A
+,,CSE 3101,Formal Languages and Compilers,3,3,A
+,,CSE 3102,Formal Languages and Compilers Sessional,1.5,3,A1
+,,,,,3,A2
+,,STA 3001,Statistics,3,3,A
+,,CSE 3103,"Microprocessor, Microcontroller and Assembly Language",3,3,A
+,,CSE 3104,"Microprocessor, Microcontroller and Assembly Language Sessional",1.5,3,A1
+,,,,,3,A2
+,,CSE 3105,Operating Systems,3,3,A
+,,CSE 3106,Operating Systems Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,CSE 3107,Software Engineering,3,3,A
+,,,Total,20.25,33,12
+,,,,,,
+33rd,6th,CSE 3200,Advanced Software/Hardware Development Project,0.75,1.5,A1
+,,,,,1.5,A2
+,,CSE 3201,Data Communication and Computer Networks,3,3,A
+,,CSE 3202,Data Communication and Computer Networks Sessional,1.5,3,A1
+,,,,,3,A2
+,,CSE 3203,Machine learning,3,3,A
+,,CSE 3204,Machine learning sessional,1.5,3,A1
+,,,,,3,A2
+,,CSE 3205,Information System Analysis and Design,3,3,A
+,,CSE 3206,Information System Analysis and Design Sessional,0.75,1.5,A1
+,,,,,1.5,A2
+,,CSE 3207,Computer Architecture,3,3,A
+,,CSE 3209,Software Project Management,3,3,A
+,,CSE 3210,Mobile Application Development Lab,0.75,1.5,A1
+,,,,,1.5,A2
+,,,Total,20.25,36,15
+,,,,,,
+32nd,7th,CSE 4100,"Thesis or Project - I, Internship based (Phase I, to be completed in 4th Year 7th Semester)",3,3,A
+,,CSE 4101,IT Service Management,3,3,A
+,,CSE 4103,Cybersecurity,3,3,A
+,,CSE 4104,Cybersecurity Sessional,1.5,3,A1
+,,,,,3,A2
+,,CSE 4105,Digital Signal and Image Processing,3,3,A
+,,PPD 4001,Personal and Professional Development,2,1.5,A
+,,CSE 4117,Neural Networks and Deep Learning,3,3,A
+,,CSE 4118,Neural Networks and Deep Learning Sessional,1.5,3,A1
+,,,,,3,A2
+,,,Total,20,28.5,10
+,,,,,,
+31st,9th,CSE 2367,Computer Architecture,3,3,A
+,,,,,3,B
+,,CSE 4131,Mobile Application and Development,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,CSE 4251,Machine Learning,3,3,A
+,,,,,3,B
+,,CSE 4252,Machine Learning Lab,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,CSE 4115,Python Programming Language,3,3,A
+,,,,,3,B
+,,CSE 4116,Python Programming Language Lab,1.5,3,A1
+,,,,,3,A2
+,,,,,3,B1
+,,,,,3,B2
+,,ICT 4106,Project III,1,1.5,A
+,,,,,1.5,B
+,,ECO 3201,Engineering Economics,2,1.5,A
+,,,,,1.5,B
+,,CHM 2101,Chemistry,3,3,A
+,,,,,3,B
+,,,Total,19.5,66,24
+,,,,,,
+30th,10th,ICT 4308,Project/Thesis (Final),4,4,A
+,,CSE 4145,Digital Image Processing,3,3,A
+,,CSE 4233,Robotics,3,3,A
+,,CSE 4131,Mobile Application and Development,1.5,3,A1
+,,,,,3,A2
+,,CSE 4251,Machine Learning,3,3,A
+,,CSE 4252,Machine Learning Lab,1.5,3,A1
+,,,,,3,A2
+,,,Total,16,25,8

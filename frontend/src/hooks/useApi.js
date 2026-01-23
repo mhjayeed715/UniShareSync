@@ -4,19 +4,15 @@ export const useApi = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const request = async (endpoint, method = 'GET', body = null, requiresAuth = true) => {
+  const request = async (endpoint, method = 'GET', body = null, isFormData = false) => {
     setLoading(true);
     setError(null);
 
-    const headers = {
-      'Content-Type': 'application/json',
-    };
+    const headers = {};
 
-    if (requiresAuth) {
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
     }
 
     const config = {
@@ -25,7 +21,10 @@ export const useApi = () => {
     };
 
     if (body) {
-      config.body = JSON.stringify(body);
+      config.body = isFormData ? body : JSON.stringify(body);
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+      }
     }
 
     try {
@@ -33,6 +32,7 @@ export const useApi = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        console.error('API Error Response:', data);
         throw new Error(data.message || 'Something went wrong');
       }
 

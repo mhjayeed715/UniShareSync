@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, BookOpen, FolderKanban, Calendar, 
-  MessageSquare, Bell, Search, Menu, X, LogOut, ChevronDown 
+  MessageSquare, Bell, Search, Menu, X, LogOut, ChevronDown, Users 
 } from 'lucide-react';
 import Dashboard from './Dashboard';
 import CourseResourcesPage from './CourseResourcesPage';
+import ClubsEventsPage from './ClubsEventsPage';
+import RoutineViewer from './RoutineViewer';
 
 const AppLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -13,6 +15,7 @@ const AppLayout = ({ onLogout }) => {
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
     { icon: BookOpen, label: 'Course Resources' },
+    { icon: Users, label: 'Clubs & Events' },
     { icon: FolderKanban, label: 'Projects' },
     { icon: Calendar, label: 'Scheduler' },
     { icon: MessageSquare, label: 'Lost & Found' },
@@ -24,6 +27,10 @@ const AppLayout = ({ onLogout }) => {
         return <Dashboard />;
       case 'Course Resources':
         return <CourseResourcesPage />;
+      case 'Clubs & Events':
+        return <ClubsEventsPage />;
+      case 'Scheduler':
+        return <RoutineViewer />;
       default:
         return (
           <div className="flex items-center justify-center h-full text-gray-400">

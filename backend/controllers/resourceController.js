@@ -43,7 +43,7 @@ exports.uploadResource = async (req, res) => {
         fileType: req.file.mimetype,
         resourceType: type || 'notes',
         uploadedBy: userId,
-        isApproved: false
+        isApproved: req.user.role === 'ADMIN' || req.user.role === 'FACULTY'
       },
       include: {
         uploader: {
@@ -61,7 +61,9 @@ exports.uploadResource = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Resource uploaded successfully and pending approval',
+      message: req.user.role === 'STUDENT' 
+        ? 'Resource uploaded successfully and pending approval'
+        : 'Resource uploaded and approved successfully',
       data: resource
     });
   } catch (error) {
