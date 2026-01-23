@@ -3,8 +3,7 @@ const prisma = require('../config/prisma');
 // Get all events
 exports.getAllEvents = async (req, res) => {
   try {
-    const { status, search, page = 1, limit = 20 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { status, search, clubId } = req.query;
 
     const where = {};
     if (status === 'upcoming') {
@@ -13,40 +12,29 @@ exports.getAllEvents = async (req, res) => {
       where.eventDate = { lt: new Date() };
     }
     if (search) {
-      where.eventName = { contains: search, mode: 'insensitive' };
+      where.title = { contains: search, mode: 'insensitive' };
+    }
+    if (clubId) {
+      where.clubId = clubId;
     }
 
-    const [events, total] = await Promise.all([
-      prisma.event.findMany({
-        where,
-        skip,
-        take: parseInt(limit),
-        orderBy: { eventDate: 'desc' },
-        include: {
-          organizer: { select: { id: true, name: true, email: true } },
-          _count: { select: { registrations: true } }
-        }
-      }),
-      prisma.event.count({ where })
-    ]);
+    const events = await prisma.event.findMany({
+      where,
+      orderBy: { eventDate: 'asc' },
+      include: {
+        creator: { select: { id: true, name: true, email: true } },
+        club: { select: { id: true, name: true } },
+        _count: { select: { registrations: true } }
+      }
+    });
 
     const eventsWithCount = events.map(event => ({
       ...event,
       registrationCount: event._count.registrations
     }));
 
-    res.json({
-      success: true,
-      data: eventsWithCount,
-      pagination: {
-        total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / parseInt(limit))
-      }
-    });
+    res.json({ success: true, data: eventsWithCount });
   } catch (error) {
-    console.error('Get events error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -58,7 +46,8 @@ exports.getEvent = async (req, res) => {
     const event = await prisma.event.findUnique({
       where: { id },
       include: {
-        organizer: { select: { id: true, name: true, email: true } },
+        creator: { select: { id: true, name: true, email: true } },
+        club: { select: { id: true, name: true } },
         registrations: {
           include: {
             user: { select: { id: true, name: true, email: true, role: true } }
@@ -80,25 +69,29 @@ exports.getEvent = async (req, res) => {
 // Create event
 exports.createEvent = async (req, res) => {
   try {
-    const { eventName, description, eventDate, location, maxParticipants } = req.body;
+    const { title, description, clubId, eventDate, startTime, endTime, location, maxCapacity, imageUrl } = req.body;
 
     const event = await prisma.event.create({
       data: {
-        eventName,
+        title,
         description,
+        clubId,
         eventDate: new Date(eventDate),
+        startTime,
+        endTime,
         location,
-        maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
-        organizerId: req.user.id
+        maxCapacity: maxCapacity ? parseInt(maxCapacity) : null,
+        imageUrl,
+        createdBy: req.user.id
       },
       include: {
-        organizer: { select: { name: true, email: true } }
+        creator: { select: { name: true, email: true } },
+        club: { select: { name: true } }
       }
     });
 
     res.status(201).json({ success: true, data: event, message: 'Event created successfully' });
   } catch (error) {
-    console.error('Create event error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -107,22 +100,26 @@ exports.createEvent = async (req, res) => {
 exports.updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { eventName, description, eventDate, location, maxParticipants } = req.body;
+    const { title, description, clubId, eventDate, startTime, endTime, location, maxCapacity, imageUrl, status } = req.body;
 
     const updateData = {};
-    if (eventName) updateData.eventName = eventName;
+    if (title) updateData.title = title;
     if (description !== undefined) updateData.description = description;
+    if (clubId !== undefined) updateData.clubId = clubId;
     if (eventDate) updateData.eventDate = new Date(eventDate);
+    if (startTime !== undefined) updateData.startTime = startTime;
+    if (endTime !== undefined) updateData.endTime = endTime;
     if (location !== undefined) updateData.location = location;
-    if (maxParticipants !== undefined) {
-      updateData.maxParticipants = maxParticipants ? parseInt(maxParticipants) : null;
-    }
+    if (maxCapacity !== undefined) updateData.maxCapacity = maxCapacity ? parseInt(maxCapacity) : null;
+    if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
+    if (status) updateData.status = status;
 
     const event = await prisma.event.update({
       where: { id },
       data: updateData,
       include: {
-        organizer: { select: { name: true } }
+        creator: { select: { name: true } },
+        club: { select: { name: true } }
       }
     });
 
@@ -136,13 +133,7 @@ exports.updateEvent = async (req, res) => {
 exports.deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Delete registrations first
-    await prisma.eventRegistration.deleteMany({ where: { eventId: id } });
-    
-    // Delete event
     await prisma.event.delete({ where: { id } });
-
     res.json({ success: true, message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -159,10 +150,75 @@ exports.getEventRegistrations = async (req, res) => {
       include: {
         user: { select: { id: true, name: true, email: true, role: true, department: true } }
       },
-      orderBy: { registeredAt: 'desc' }
+      orderBy: { registrationDate: 'desc' }
     });
 
     res.json({ success: true, data: registrations });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Register for event (Student)
+exports.registerForEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const event = await prisma.event.findUnique({ where: { id } });
+    if (!event) {
+      return res.status(404).json({ success: false, message: 'Event not found' });
+    }
+
+    if (event.maxCapacity && event.currentRegistrations >= event.maxCapacity) {
+      return res.status(400).json({ success: false, message: 'Event is full' });
+    }
+
+    const existing = await prisma.eventRegistration.findUnique({
+      where: { eventId_userId: { eventId: id, userId: req.user.id } }
+    });
+
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Already registered' });
+    }
+
+    await prisma.$transaction([
+      prisma.eventRegistration.create({
+        data: { eventId: id, userId: req.user.id }
+      }),
+      prisma.event.update({
+        where: { id },
+        data: { currentRegistrations: { increment: 1 } }
+      })
+    ]);
+
+    res.status(201).json({ success: true, message: 'Registered successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Unregister from event
+exports.unregisterFromEvent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const registration = await prisma.eventRegistration.findUnique({
+      where: { eventId_userId: { eventId: id, userId: req.user.id } }
+    });
+
+    if (!registration) {
+      return res.status(404).json({ success: false, message: 'Registration not found' });
+    }
+
+    await prisma.$transaction([
+      prisma.eventRegistration.delete({ where: { id: registration.id } }),
+      prisma.event.update({
+        where: { id },
+        data: { currentRegistrations: { decrement: 1 } }
+      })
+    ]);
+
+    res.json({ success: true, message: 'Unregistered successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
