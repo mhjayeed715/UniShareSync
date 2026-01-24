@@ -8,9 +8,9 @@ exports.getAllEvents = async (req, res) => {
 
     const where = {};
     if (status === 'upcoming') {
-      where.eventDate = { gte: new Date() };
+      where.eventDate = { gte: new Date().setHours(0, 0, 0, 0) };
     } else if (status === 'past') {
-      where.eventDate = { lt: new Date() };
+      where.eventDate = { lt: new Date().setHours(0, 0, 0, 0) };
     }
     if (search) {
       where.title = { contains: search, mode: 'insensitive' };
