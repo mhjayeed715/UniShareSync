@@ -24,10 +24,12 @@ const ClubsEventsPage = () => {
     try {
       setLoading(true);
       if (activeTab === 'events') {
-        const res = await api.getEvents('?status=upcoming');
+        const res = await api.getEvents('');
+        console.log('Events response:', res);
         setEvents(res.data || []);
       } else {
         const res = await api.getClubs();
+        console.log('Clubs response:', res);
         setClubs(res.data || []);
       }
     } catch (error) {
