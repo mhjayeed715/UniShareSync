@@ -292,6 +292,7 @@ const ClubEventManager = () => {
                     name="eventDate"
                     type="date"
                     defaultValue={editingItem?.eventDate?.split('T')[0]}
+                    min={new Date().toISOString().split('T')[0]}
                     required
                     className="w-full px-4 py-2 border rounded-lg"
                   />

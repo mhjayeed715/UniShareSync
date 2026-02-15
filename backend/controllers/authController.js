@@ -16,10 +16,10 @@ exports.signup = async (req, res) => {
     }
 
     // Validate email format
-    // Allow any email ending in .ac.bd
-    const emailRegex = /^[\w.-]+@[\w.-]+\.ac\.bd$/;
+    // Allow emails ending in .com, .edu, .org, .net, .ac.bd, etc.
+    const emailRegex = /^[\w.-]+@[\w.-]+\.(com|edu|org|net|ac\.bd|io|co)$/i;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: 'Invalid email format. Please use a university email ending in .ac.bd' });
+      return res.status(400).json({ message: 'Invalid email format. Please use a valid email address (e.g., example@gmail.com)' });
     }
 
     // Validate password length
@@ -68,10 +68,6 @@ exports.login = async (req, res) => {
   const { email, password, rememberMe } = req.body;
 
   try {
-    console.log('Login attempt:', email);
-    
-    await prisma.$queryRaw`SELECT 1`;
-    
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -81,8 +77,6 @@ exports.login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
-
-    console.log('User authenticated:', user.role);
 
     const testEmails = ['student@test.com', 'faculty@test.com'];
     const isTestAccount = testEmails.includes(user.email);
@@ -117,7 +111,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    console.log('Generating OTP...');
     const otp = crypto.randomInt(100000, 999999).toString();
     await prisma.oTP.create({
       data: {
@@ -126,14 +119,12 @@ exports.login = async (req, res) => {
       }
     });
 
-    console.log('Sending email...');
     try {
       await sendEmail({
         email: user.email,
         subject: 'Your UniShareSync Login OTP',
         message: `Your login OTP is ${otp}. It is valid for 10 minutes.`
       });
-      console.log('Email sent successfully');
     } catch (emailError) {
       console.error('Email sending failed:', emailError);
       return res.status(500).json({ message: 'Failed to send OTP email. Please try again.' });
@@ -235,5 +226,17 @@ exports.resendOTP = async (req, res) => {
   } catch (error) {
     console.error('Resend OTP error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+exports.verifyToken = async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, role: user.role, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };

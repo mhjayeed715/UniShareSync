@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle, Bell, X } from 'lucide-react';
 import { Hero } from '../components/ui/animated-hero';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const LandingPage = ({ onNavigate }) => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,7 @@ const LandingPage = ({ onNavigate }) => {
 
   const fetchNotices = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/notices/public');
+      const response = await fetch(`${API_URL}/api/notices/public`);
       if (!response.ok) {
         throw new Error('Failed to fetch notices');
       }
@@ -101,7 +103,7 @@ const LandingPage = ({ onNavigate }) => {
                         <p className="text-brand-gray mb-3">{notice.content}</p>
                         {notice.imageUrl && (
                           <img 
-                            src={`http://localhost:5000${notice.imageUrl}`} 
+                            src={`${API_URL}${notice.imageUrl}`} 
                             alt={notice.title} 
                             className="rounded-lg max-h-48 object-cover mb-3"
                           />

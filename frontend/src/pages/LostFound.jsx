@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, MapPin, Calendar, Eye, Filter, X, Clock, CheckCircle, AlertTriangle, Camera } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const LostFound = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,9 +17,26 @@ const LostFound = () => {
     type: 'LOST',
     category: 'Personal Items',
     location: '',
-    contactInfo: '',
+    contactEmail: '',
+    contactPhone: '',
     image: null
   });
+  const [contactErrors, setContactErrors] = useState({ email: '', phone: '' });
+
+  const validateEmail = (email) => {
+    if (!email) return true; // Optional
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    if (!phone) return true; // Optional
+    // Remove spaces, dashes, parentheses for validation
+    const cleaned = phone.replace(/[\s\-()]/g, '');
+    // BD phone: +8801[3-9]XXXXXXXX or 01[3-9]XXXXXXXX (11 digits without country code)
+    const bdPhoneRegex = /^(\+880|880)?01[3-9]\d{8}$/;
+    return bdPhoneRegex.test(cleaned);
+  };
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   useEffect(() => {
@@ -29,7 +48,7 @@ const LostFound = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/lost-found', {
+      const response = await fetch(`${API_URL}/api/lost-found`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -93,13 +112,33 @@ const LostFound = () => {
       formDataToSend.append('type', formData.type);
       formDataToSend.append('category', formData.category);
       formDataToSend.append('location', formData.location);
-      formDataToSend.append('contactInfo', formData.contactInfo);
+      // Validate contact info
+      const emailValid = validateEmail(formData.contactEmail);
+      const phoneValid = validatePhone(formData.contactPhone);
+      
+      if (!formData.contactEmail && !formData.contactPhone) {
+        alert('Please provide at least an email or phone number');
+        return;
+      }
+      
+      if (!emailValid) {
+        setContactErrors(prev => ({ ...prev, email: 'Invalid email format' }));
+        return;
+      }
+      
+      if (!phoneValid) {
+        setContactErrors(prev => ({ ...prev, phone: 'Invalid BD phone (e.g., 01712345678 or +8801712345678)' }));
+        return;
+      }
+      
+      const contactInfo = [formData.contactEmail, formData.contactPhone].filter(Boolean).join(' / ');
+      formDataToSend.append('contactInfo', contactInfo);
       
       if (formData.image) {
         formDataToSend.append('image', formData.image);
       }
       
-      const response = await fetch('http://localhost:5000/api/lost-found', {
+      const response = await fetch(`${API_URL}/api/lost-found`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -122,7 +161,8 @@ const LostFound = () => {
         type: 'LOST',
         category: 'Personal Items',
         location: '',
-        contactInfo: '',
+        contactEmail: '',
+        contactPhone: '',
         image: null
       });
       
@@ -140,7 +180,7 @@ const LostFound = () => {
       if (!response) return;
       
       const token = localStorage.getItem('token');
-      const apiResponse = await fetch(`http://localhost:5000/api/lost-found/${itemId}/found-response`, {
+      const apiResponse = await fetch(`${API_URL}/api/lost-found/${itemId}/found-response`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -164,7 +204,7 @@ const LostFound = () => {
   const handleStatusUpdate = async (itemId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}/status`, {
+      const response = await fetch(`${API_URL}/api/lost-found/${itemId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -191,7 +231,7 @@ const LostFound = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}`, {
+      const response = await fetch(`${API_URL}/api/lost-found/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -363,7 +403,7 @@ const LostFound = () => {
                     {item.imageUrl && (
                       <div className="mb-4">
                         <img 
-                          src={item.imageUrl.startsWith('blob:') ? item.imageUrl : `http://localhost:5000${item.imageUrl}`} 
+                          src={item.imageUrl.startsWith('blob:') ? item.imageUrl : `${API_URL}${item.imageUrl}`} 
                           alt={item.title} 
                           className="w-full h-48 object-contain rounded-lg border bg-gray-50"
                         />
@@ -494,7 +534,7 @@ const LostFound = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Image</h3>
                   <img 
-                    src={selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `http://localhost:5000${selectedItem.imageUrl}`} 
+                    src={selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
                     alt={selectedItem.title} 
                     className="w-full max-w-md h-64 object-cover rounded-lg border"
                   />
@@ -591,15 +631,33 @@ const LostFound = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Information</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
                 <input
-                  type="text"
-                  value={formData.contactInfo}
-                  onChange={(e) => setFormData({...formData, contactInfo: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue"
-                  placeholder="Email or phone number"
-                  required
+                  type="email"
+                  value={formData.contactEmail}
+                  onChange={(e) => {
+                    setFormData({...formData, contactEmail: e.target.value});
+                    setContactErrors(prev => ({ ...prev, email: '' }));
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue ${contactErrors.email ? 'border-red-500' : ''}`}
+                  placeholder="your.email@example.com"
                 />
+                {contactErrors.email && <p className="text-red-500 text-xs mt-1">{contactErrors.email}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+                <input
+                  type="tel"
+                  value={formData.contactPhone}
+                  onChange={(e) => {
+                    setFormData({...formData, contactPhone: e.target.value});
+                    setContactErrors(prev => ({ ...prev, phone: '' }));
+                  }}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-blue ${contactErrors.phone ? 'border-red-500' : ''}`}
+                  placeholder="01712345678 or +8801712345678"
+                />
+                {contactErrors.phone && <p className="text-red-500 text-xs mt-1">{contactErrors.phone}</p>}
+                <p className="text-gray-500 text-xs mt-1">Provide at least email or phone</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Image (Optional)</label>

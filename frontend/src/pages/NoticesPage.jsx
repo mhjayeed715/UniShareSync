@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, X, Maximize2, FileText } from 'lucide-react';
 import api from '../api';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const NoticesPage = () => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ const NoticesPage = () => {
                   ) : (
                     <>
                       <img 
-                        src={`http://localhost:5000${notice.imageUrl}`} 
+                        src={`${API_URL}${notice.imageUrl}`} 
                         alt={notice.title} 
                         className="rounded-lg max-h-64 object-cover cursor-pointer"
                         onClick={() => setPreviewNotice(notice)}
@@ -152,13 +154,13 @@ const NoticesPage = () => {
                 <div className="mt-6">
                   {previewNotice.imageUrl.endsWith('.pdf') ? (
                     <iframe
-                      src={`http://localhost:5000${previewNotice.imageUrl}`}
+                      src={`${API_URL}${previewNotice.imageUrl}`}
                       className="w-full h-[600px] rounded-lg border-2 border-gray-200"
                       title={previewNotice.title}
                     />
                   ) : (
                     <img 
-                      src={`http://localhost:5000${previewNotice.imageUrl}`} 
+                      src={`${API_URL}${previewNotice.imageUrl}`} 
                       alt={previewNotice.title} 
                       className="w-full rounded-lg shadow-lg"
                       onError={(e) => { e.target.style.display = 'none'; }}

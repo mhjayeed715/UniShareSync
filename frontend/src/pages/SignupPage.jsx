@@ -21,7 +21,8 @@ const SignupPage = ({ onNavigate, setUserEmail, setUserId }) => {
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/departments');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/departments`);
       const data = await res.json();
       console.log('Departments fetched:', data);
       if (data.success) {
@@ -122,10 +123,10 @@ const SignupPage = ({ onNavigate, setUserEmail, setUserId }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-brand-dark mb-1">University Email</label>
+              <label className="block text-sm font-medium text-brand-dark mb-1">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal outline-none" placeholder="yourname@university.ac.bd" />
+                <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal outline-none" placeholder="yourname@gmail.com" />
               </div>
             </div>
 

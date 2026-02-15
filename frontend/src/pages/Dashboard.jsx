@@ -4,6 +4,8 @@ import {
   Clock, FileText, AlertCircle, Bell, X, Maximize2
 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [stats, setStats] = useState(null);
@@ -22,13 +24,13 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       
       const [statsRes, activitiesRes, noticesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/dashboard/stats', {
+        fetch(`${API_URL}/api/dashboard/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:5000/api/dashboard/activities', {
+        fetch(`${API_URL}/api/dashboard/activities`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:5000/api/notices', {
+        fetch(`${API_URL}/api/notices`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -168,7 +170,7 @@ const Dashboard = () => {
                           ) : (
                             <>
                               <img 
-                                src={`http://localhost:5000${notice.imageUrl}`} 
+                                src={`${API_URL}${notice.imageUrl}`} 
                                 alt={notice.title} 
                                 className="rounded-lg max-h-48 object-cover w-full"
                               />
@@ -270,13 +272,13 @@ const Dashboard = () => {
                 <div className="mt-6">
                   {previewNotice.imageUrl.endsWith('.pdf') ? (
                     <iframe
-                      src={`http://localhost:5000${previewNotice.imageUrl}`}
+                      src={`${API_URL}${previewNotice.imageUrl}`}
                       className="w-full h-[600px] rounded-lg border-2 border-gray-200"
                       title={previewNotice.title}
                     />
                   ) : (
                     <img 
-                      src={`http://localhost:5000${previewNotice.imageUrl}`} 
+                      src={`${API_URL}${previewNotice.imageUrl}`} 
                       alt={previewNotice.title} 
                       className="w-full rounded-lg shadow-lg"
                     />

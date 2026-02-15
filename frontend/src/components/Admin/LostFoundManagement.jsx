@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, MapPin, Calendar, Eye, Edit2, Trash2, X, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const LostFoundManagement = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +22,7 @@ const LostFoundManagement = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/lost-found', {
+      const response = await fetch(`${API_URL}/api/lost-found`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -78,7 +80,7 @@ const LostFoundManagement = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}/status`, {
+      const response = await fetch(`${API_URL}/api/lost-found/${itemId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -105,7 +107,7 @@ const LostFoundManagement = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/lost-found/${itemId}`, {
+      const response = await fetch(`${API_URL}/api/lost-found/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -138,7 +140,7 @@ const LostFoundManagement = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/manage/lost-found/${editingItem.id}`, {
+      const response = await fetch(`${API_URL}/api/admin/manage/lost-found/${editingItem.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -405,7 +407,7 @@ const LostFoundManagement = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Image</h3>
                   <img 
-                    src={selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `http://localhost:5000${selectedItem.imageUrl}`} 
+                    src={selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
                     alt={selectedItem.title} 
                     className="w-full max-w-md h-64 object-cover rounded-lg border"
                   />
