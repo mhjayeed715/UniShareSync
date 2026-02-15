@@ -8,10 +8,8 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('rememberMe') === 'true');
   const inputsRef = useRef([]);
-
-  // Get remember me preference from localStorage
-  const rememberMe = localStorage.getItem('rememberMe') === 'true';
 
   const handleInputChange = (e, index) => {
     const { value } = e.target;
@@ -162,14 +160,14 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
           {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
 
           <div className="mb-4">
-            <label className="flex items-center justify-center">
+            <label className="flex items-center justify-center cursor-pointer">
               <input 
                 type="checkbox" 
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 text-brand-teal rounded border-gray-300 focus:ring-brand-teal"
+                className="w-4 h-4 text-brand-teal rounded border-gray-300 focus:ring-brand-teal cursor-pointer"
               />
-              <span className="ml-2 text-sm text-brand-gray">Remember me for 24 hours</span>
+              <span className="ml-2 text-sm text-gray-600">Remember me for 24 hours</span>
             </label>
           </div>
 

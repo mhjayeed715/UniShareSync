@@ -81,16 +81,16 @@ exports.login = async (req, res) => {
     const testEmails = ['student@test.com', 'faculty@test.com'];
     const isTestAccount = testEmails.includes(user.email);
     
-    // Check if user can skip OTP (remember me within 24 hours)
-    const canSkipOtp = rememberMe && user.lastLoginSkipOtp && 
+    // Check if user can skip OTP (remembered within 24 hours - checkbox NOT required on subsequent logins)
+    const canSkipOtp = user.lastLoginSkipOtp && 
       (new Date() - new Date(user.lastLoginSkipOtp)) < 24 * 60 * 60 * 1000;
 
-    // Bypass OTP for admin, test accounts, or remember me users
+    // Bypass OTP for admin, test accounts, or remembered users
     if (user.role === 'ADMIN' || isTestAccount || canSkipOtp) {
       const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
       
-      // Update lastLoginSkipOtp if remember me is checked
-      if (rememberMe) {
+      // Update lastLoginSkipOtp if remember me is checked (extends the 24h window)
+      if (rememberMe || canSkipOtp) {
         await prisma.user.update({
           where: { id: user.id },
           data: { lastLoginSkipOtp: new Date() }

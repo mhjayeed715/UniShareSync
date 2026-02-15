@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [allActivities, setAllActivities] = useState([]);
   const [activitiesPage, setActivitiesPage] = useState(1);
   const [sortOrder, setSortOrder] = useState('desc');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [profileData, setProfileData] = useState({ name: user.name, department: user.department });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -130,6 +131,10 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/';
@@ -449,6 +454,37 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <LogOut className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Logout</h3>
+              <p className="text-gray-600 mb-6">Are you sure you want to logout from UniShareSync?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmLogout}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ChatBot />
     </div>
   );

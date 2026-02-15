@@ -20,6 +20,7 @@ const AppLayout = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -297,7 +298,7 @@ const AppLayout = ({ onLogout }) => {
               {sidebarOpen && <span>Settings</span>}
             </button>
             <button 
-              onClick={onLogout}
+              onClick={() => setShowLogoutConfirm(true)}
               className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-red-500/10 hover:text-red-400 transition-colors`}
             >
               <LogOut className="w-5 h-5" />
@@ -422,6 +423,40 @@ const AppLayout = ({ onLogout }) => {
           </div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <LogOut className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Confirm Logout</h3>
+              <p className="text-gray-600 mb-6">Are you sure you want to logout from UniShareSync?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowLogoutConfirm(false);
+                    onLogout();
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ChatBot />
     </div>
   );
