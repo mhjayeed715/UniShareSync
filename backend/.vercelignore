@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Uploads (use cloud storage in production)
+uploads/
+
+# Local files
+*.log
+.env.local
+.DS_Store
+
+# Development files
+start-clean.js
+test-*.js
+check-users.js
+add-remember-me-field.js
+seed.js

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Send, Star, Eye, Filter, X, Clock, CheckCircle, AlertCircle, Lock, Camera, Image, Edit, Trash2 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Feedback = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [myFeedbacks, setMyFeedbacks] = useState([]);
@@ -29,7 +31,7 @@ const Feedback = () => {
       const token = localStorage.getItem('token');
       
       // Fetch all feedback for community view
-      const response = await fetch('http://localhost:5000/api/feedback', {
+      const response = await fetch(`${API_URL}/api/feedback`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -44,7 +46,7 @@ const Feedback = () => {
       setFeedbacks(allFeedbacks);
       
       // Fetch user's feedback
-      const myResponse = await fetch('http://localhost:5000/api/feedback/my-feedback', {
+      const myResponse = await fetch(`${API_URL}/api/feedback/my-feedback`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -120,7 +122,7 @@ const Feedback = () => {
         formDataToSend.append('image', formData.image);
       }
       
-      const response = await fetch('http://localhost:5000/api/feedback', {
+      const response = await fetch(`${API_URL}/api/feedback`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -160,7 +162,7 @@ const Feedback = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}`, {
+      const response = await fetch(`${API_URL}/api/feedback/${feedbackId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -184,7 +186,7 @@ const Feedback = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}/archive`, {
+      const response = await fetch(`${API_URL}/api/feedback/${feedbackId}/archive`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -209,7 +211,7 @@ const Feedback = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/feedback/${feedbackId}/resolve`, {
+      const response = await fetch(`${API_URL}/api/feedback/${feedbackId}/resolve`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -474,7 +476,7 @@ const Feedback = () => {
                         {feedback.imageUrl && (
                           <div className="mb-4">
                             <img 
-                              src={feedback.imageUrl.startsWith('blob:') ? feedback.imageUrl : `http://localhost:5000${feedback.imageUrl}`} 
+                              src={feedback.imageUrl.startsWith('blob:') ? feedback.imageUrl : `${API_URL}${feedback.imageUrl}`} 
                               alt="Feedback attachment" 
                               className="w-full max-w-sm h-32 object-cover rounded-lg border"
                             />
@@ -580,7 +582,7 @@ const Feedback = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Attachment</h3>
                   <img 
-                    src={selectedFeedback.imageUrl.startsWith('blob:') ? selectedFeedback.imageUrl : `http://localhost:5000${selectedFeedback.imageUrl}`} 
+                    src={selectedFeedback.imageUrl.startsWith('blob:') ? selectedFeedback.imageUrl : `${API_URL}${selectedFeedback.imageUrl}`} 
                     alt="Feedback attachment" 
                     className="w-full max-w-md h-64 object-cover rounded-lg border"
                   />

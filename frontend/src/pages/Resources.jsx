@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, Search, X, FileText, Download, Eye, Calendar, User, BookOpen } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Resources = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -30,7 +32,7 @@ const Resources = () => {
   const fetchResources = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/resources', {
+      const response = await fetch(`${API_URL}/api/resources`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -93,7 +95,7 @@ const Resources = () => {
       formData.append('semester', uploadData.semester);
       formData.append('type', uploadData.type);
 
-      const response = await fetch('http://localhost:5000/api/resources/upload', {
+      const response = await fetch(`${API_URL}/api/resources/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -127,7 +129,7 @@ const Resources = () => {
 
   const handleDownload = async (resourceId, fileName) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/resources/${resourceId}/download`, {
+      const response = await fetch(`${API_URL}/api/resources/${resourceId}/download`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -154,7 +156,7 @@ const Resources = () => {
 
   const handleView = async (resourceId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/resources/${resourceId}`, {
+      const response = await fetch(`${API_URL}/api/resources/${resourceId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -163,7 +165,7 @@ const Resources = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data.filePath) {
-          window.open(`http://localhost:5000${data.data.filePath}`, '_blank');
+          window.open(`${API_URL}${data.data.filePath}`, '_blank');
         }
       }
     } catch (error) {

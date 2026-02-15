@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Mail, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -61,7 +63,7 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/verify-otp', {
+      const res = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, otp: otpCode, rememberMe }),
@@ -105,7 +107,7 @@ const OtpVerificationPage = ({ onNavigate, onVerify, userEmail, userId }) => {
   const handleResendOtp = async () => {
     toast.loading('Resending OTP...');
     try {
-        const res = await fetch('http://localhost:5000/api/auth/resend-otp', {
+        const res = await fetch(`${API_URL}/api/auth/resend-otp`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: userEmail }),

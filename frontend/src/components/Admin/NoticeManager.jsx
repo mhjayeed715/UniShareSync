@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, AlertCircle, Image as ImageIcon, X, FileText } from 'lucide-react';
 import { useApi } from '../../hooks/useApi';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const NoticeManager = () => {
   const [notices, setNotices] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -89,7 +91,7 @@ const NoticeManager = () => {
       if (notice.imageUrl.endsWith('.pdf')) {
         setImagePreview('pdf');
       } else {
-        setImagePreview(`http://localhost:5000${notice.imageUrl}`);
+        setImagePreview(`${API_URL}${notice.imageUrl}`);
       }
     }
     setShowForm(true);
@@ -225,7 +227,7 @@ const NoticeManager = () => {
                     </div>
                   ) : (
                     <img 
-                      src={`http://localhost:5000${notice.imageUrl}`} 
+                      src={`${API_URL}${notice.imageUrl}`} 
                       alt={notice.title} 
                       className="mt-3 rounded-lg max-h-48 object-cover"
                     />

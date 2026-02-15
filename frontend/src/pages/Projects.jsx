@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Users, Calendar, CheckCircle, Clock, AlertCircle, Eye, UserPlus, X } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Projects = () => {
   const [projects, setProjects] = useState([]);
   const [myProjects, setMyProjects] = useState([]);
@@ -33,7 +35,7 @@ const Projects = () => {
       if (semesterFilter) params.append('semester', semesterFilter);
       if (searchTerm) params.append('search', searchTerm);
       
-      const response = await fetch(`http://localhost:5000/api/projects?${params}`, {
+      const response = await fetch(`${API_URL}/api/projects?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -48,7 +50,7 @@ const Projects = () => {
       setProjects(allProjects);
       
       // Fetch user's projects
-      const myResponse = await fetch('http://localhost:5000/api/projects/my-projects', {
+      const myResponse = await fetch(`${API_URL}/api/projects/my-projects`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -94,7 +96,7 @@ const Projects = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}/join`, {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}/join`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -145,7 +147,7 @@ const Projects = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -172,7 +174,7 @@ const Projects = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+      const response = await fetch(`${API_URL}/api/projects/${projectId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -526,7 +528,7 @@ const Projects = () => {
                 try {
                   const token = localStorage.getItem('token');
                   
-                  const response = await fetch('http://localhost:5000/api/projects', {
+                  const response = await fetch(`${API_URL}/api/projects`, {
                     method: 'POST',
                     headers: {
                       'Authorization': `Bearer ${token}`,

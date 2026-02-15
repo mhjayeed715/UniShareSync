@@ -17,7 +17,8 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
     const loadingToast = toast.loading('Logging in...');
 
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, rememberMe }),
@@ -87,11 +88,11 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
           </button>
           
           <h2 className="text-2xl font-bold text-brand-blue mb-2">Login to UniShareSync</h2>
-          <p className="text-brand-gray mb-8">Please enter your university credentials.</p>
+          <p className="text-brand-gray mb-8">Please enter your credentials.</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-brand-dark mb-2">University Email</label>
+              <label className="block text-sm font-medium text-brand-dark mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input 
@@ -99,7 +100,7 @@ const LoginPage = ({ onNavigate, onLoginSuccess, setUserEmail, setUserId }) => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="yourname@university.ac.bd"
+                  placeholder="yourname@gmail.com"
                   className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-teal focus:border-brand-teal transition-all outline-none"
                 />
               </div>

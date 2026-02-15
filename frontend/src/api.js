@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000';
+import API_URL from './config/api';
 
 class ApiClient {
   async request(endpoint, method = 'GET', body = null, requiresAuth = true) {

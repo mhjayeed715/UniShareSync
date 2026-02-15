@@ -4,6 +4,8 @@ import {
   FileText, FileVideo, FileAudio, Code, Grid, List, ChevronDown, X
 } from 'lucide-react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const CourseResourcesPage = () => {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -26,31 +28,23 @@ const CourseResourcesPage = () => {
   });
 
   useEffect(() => {
-    console.log('CourseResourcesPage mounted');
     fetchResources();
   }, []);
 
   const fetchResources = async () => {
     try {
-      console.log('Fetching resources...');
       setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('Token:', token ? 'present' : 'missing');
-      const response = await fetch('http://localhost:5000/api/resources', {
+      const response = await fetch(`${API_URL}/api/resources`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      console.log('Response status:', response.status);
-      
       if (response.ok) {
         const data = await response.json();
-        console.log('API Response:', data);
         if (data.success) {
           const resourcesData = data.resources || data.data || [];
-          console.log('Resources data:', resourcesData);
-          console.log('Resources count:', resourcesData.length);
           setResources(resourcesData);
           
           // Group resources by semester
@@ -101,7 +95,7 @@ const CourseResourcesPage = () => {
       formData.append('semester', uploadData.semester);
       formData.append('type', uploadData.type);
 
-      const response = await fetch('http://localhost:5000/api/resources/upload', {
+      const response = await fetch(`${API_URL}/api/resources/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -442,7 +436,7 @@ const CourseResourcesPage = () => {
                       <button 
                         onClick={async () => {
                           try {
-                            const response = await fetch(`http://localhost:5000/api/resources/${resource.id}/download`, {
+                            const response = await fetch(`${API_URL}/api/resources/${resource.id}/download`, {
                               headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                             });
                             if (response.ok) {
@@ -496,7 +490,7 @@ const CourseResourcesPage = () => {
                       <button 
                         onClick={async () => {
                           try {
-                            const response = await fetch(`http://localhost:5000/api/resources/${resource.id}/download`, {
+                            const response = await fetch(`${API_URL}/api/resources/${resource.id}/download`, {
                               headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
                             });
                             if (response.ok) {

@@ -10,7 +10,10 @@ import RoutineViewer from './RoutineViewer';
 import Projects from './Projects';
 import LostFound from './LostFound';
 import Feedback from './Feedback';
+import ChatBot from '../components/ChatBot';
 import api from '../api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const AppLayout = ({ onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -23,7 +26,7 @@ const AppLayout = ({ onLogout }) => {
   const [profileData, setProfileData] = useState({ name: '' });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [profilePicture, setProfilePicture] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `http://localhost:5000${user.profilePicture}` : null);
+  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `${API_URL}${user.profilePicture}` : null);
 
   useEffect(() => {
     setProfileData({ name: user.name });
@@ -39,7 +42,7 @@ const AppLayout = ({ onLogout }) => {
       if (profilePicture) formData.append('profilePicture', profilePicture);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/profile/update', {
+      const response = await fetch(`${API_URL}/api/profile/update`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -78,7 +81,7 @@ const AppLayout = ({ onLogout }) => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/notifications', {
+      const response = await fetch(`${API_URL}/api/notifications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -95,7 +98,7 @@ const AppLayout = ({ onLogout }) => {
   const markAsRead = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${API_URL}/api/notifications/${id}/read`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -108,7 +111,7 @@ const AppLayout = ({ onLogout }) => {
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:5000/api/notifications/read-all', {
+      await fetch(`${API_URL}/api/notifications/read-all`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -145,7 +148,7 @@ const AppLayout = ({ onLogout }) => {
                     {profilePreview ? (
                       <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
                     ) : user.profilePicture ? (
-                      <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                      <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       user.name?.charAt(0) || 'U'
                     )}
@@ -337,7 +340,7 @@ const AppLayout = ({ onLogout }) => {
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setShowSettings(true)}>
               <div className="w-9 h-9 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-sm overflow-hidden">
                 {user.profilePicture ? (
-                  <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   user.name?.charAt(0) || 'U'
                 )}
@@ -419,6 +422,7 @@ const AppLayout = ({ onLogout }) => {
           </div>
         </div>
       )}
+      <ChatBot />
     </div>
   );
 };

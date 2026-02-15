@@ -260,7 +260,7 @@ const ClubsEventsPage = () => {
                 <>
                   <input name="title" placeholder="Event Title" required className="w-full px-4 py-2 border rounded-lg" />
                   <textarea name="description" placeholder="Description" className="w-full px-4 py-2 border rounded-lg" rows="3" />
-                  <input name="eventDate" type="date" required className="w-full px-4 py-2 border rounded-lg" />
+                  <input name="eventDate" type="date" min={new Date().toISOString().split('T')[0]} required className="w-full px-4 py-2 border rounded-lg" />
                   <div className="grid grid-cols-2 gap-4">
                     <input name="startTime" type="time" placeholder="Start Time" className="px-4 py-2 border rounded-lg" />
                     <input name="endTime" type="time" placeholder="End Time" className="px-4 py-2 border rounded-lg" />

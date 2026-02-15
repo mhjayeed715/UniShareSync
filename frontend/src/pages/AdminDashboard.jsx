@@ -10,7 +10,10 @@ import ProjectManagement from '../components/Admin/ProjectManagement';
 import LostFoundManagement from '../components/Admin/LostFoundManagement';
 import FeedbackManagement from '../components/Admin/FeedbackManagement';
 import NotificationManager from '../components/Admin/NotificationManager';
+import ChatBot from '../components/ChatBot';
 import api from '../api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const AdminDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -26,7 +29,7 @@ const AdminDashboard = () => {
   const [profileData, setProfileData] = useState({ name: user.name, department: user.department });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [profilePicture, setProfilePicture] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `http://localhost:5000${user.profilePicture}` : null);
+  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `${API_URL}${user.profilePicture}` : null);
 
   const handleUpdateProfile = async () => {
     try {
@@ -36,7 +39,7 @@ const AdminDashboard = () => {
       if (profilePicture) formData.append('profilePicture', profilePicture);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/profile/update', {
+      const response = await fetch(`${API_URL}/api/profile/update`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -73,11 +76,39 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (user.role !== 'ADMIN') {
-      window.location.href = '/dashboard';
-      return;
-    }
-    fetchDashboardData();
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
+      try {
+        const response = await fetch(`${API_URL}/api/auth/verify-token`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return;
+        }
+        const res = await response.json();
+        if (!res.success || res.role !== 'ADMIN') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return;
+        }
+        fetchDashboardData();
+      } catch (error) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    };
+    verifyToken();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -167,7 +198,7 @@ const AdminDashboard = () => {
                   {profilePreview ? (
                     <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
                   ) : user.profilePicture ? (
-                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name?.[0]
                   )}
@@ -364,7 +395,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg overflow-hidden">
                   {user.profilePicture ? (
-                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `http://localhost:5000${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name?.[0]
                   )}
@@ -418,6 +449,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+      <ChatBot />
     </div>
   );
 };

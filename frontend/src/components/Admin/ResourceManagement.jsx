@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Search, CheckCircle, XCircle, Download, Trash2, Filter, Upload, FileText, X, Edit } from 'lucide-react';
 import api from '../../api';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 import { parseCSV } from '../../utils/routineParser';
 import courseOfferCSV from '../../assets/Proposed Course Offer Winter 2026 - CSE.csv?raw';
 
@@ -169,7 +171,7 @@ const ResourceManagement = () => {
         fileName: uploadData.file.name
       });
 
-      const response = await fetch('http://localhost:5000/api/resources/upload', {
+      const response = await fetch(`${API_URL}/api/resources/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -212,7 +214,7 @@ const ResourceManagement = () => {
     
     try {
       setUploading(true);
-      const response = await fetch(`http://localhost:5000/api/admin/manage/resources/${editingResource.id}`, {
+      const response = await fetch(`${API_URL}/api/admin/manage/resources/${editingResource.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
