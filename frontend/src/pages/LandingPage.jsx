@@ -182,13 +182,19 @@ const LandingPage = ({ onNavigate }) => {
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-gray-900 mb-2">{notice.title}</h3>
                         <p className="text-gray-600 mb-3">{notice.content}</p>
-                        {notice.imageUrl && (
+                        {notice.hasImage && !notice.isPdf && (
                           <img 
-                            src={notice.imageUrl.startsWith('data:') || notice.imageUrl.startsWith('http') ? notice.imageUrl : `${API_URL}${notice.imageUrl}`} 
+                            src={`${API_URL}/api/notices/${notice.id}/image`} 
                             alt={notice.title} 
                             className="rounded-lg max-h-48 object-cover mb-3"
                             onError={(e) => { e.target.style.display = 'none'; }}
                           />
+                        )}
+                        {notice.hasImage && notice.isPdf && (
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 mb-3">
+                            <FileText className="w-6 h-6 text-red-600 flex-shrink-0" />
+                            <span className="text-sm font-medium text-red-800">PDF Attached</span>
+                          </div>
                         )}
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span>{new Date(notice.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>

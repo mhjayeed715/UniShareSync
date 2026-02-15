@@ -5,13 +5,15 @@ const {
   getAllNotices, 
   createNotice, 
   updateNotice, 
-  deleteNotice 
+  deleteNotice,
+  getNoticeImage
 } = require('../controllers/noticeController');
 const { protect } = require('../middleware/authMiddleware');
 const noticeUpload = require('../middleware/noticeUploadMiddleware');
 
-// Public route - no auth required
+// Public routes - no auth required
 router.get('/public', getPublicNotices);
+router.get('/:id/image', getNoticeImage);
 
 // Protected routes - require authentication
 router.get('/', protect, getAllNotices);

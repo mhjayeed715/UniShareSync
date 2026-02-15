@@ -4,16 +4,7 @@ import { useApi } from '../../hooks/useApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const getNoticeMediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('data:') || url.startsWith('http')) return url;
-  return `${API_URL}${url}`;
-};
-
-const isPdf = (url) => {
-  if (!url) return false;
-  return url.startsWith('data:application/pdf') || url.endsWith('.pdf');
-};
+const getNoticeImageSrc = (noticeId) => `${API_URL}/api/notices/${noticeId}/image`;
 
 const NoticeManager = () => {
   const [notices, setNotices] = useState([]);
@@ -98,11 +89,11 @@ const NoticeManager = () => {
       content: notice.content,
       priority: notice.priority
     });
-    if (notice.imageUrl) {
-      if (isPdf(notice.imageUrl)) {
+    if (notice.hasImage) {
+      if (notice.isPdf) {
         setImagePreview('pdf');
       } else {
-        setImagePreview(getNoticeMediaUrl(notice.imageUrl));
+        setImagePreview(getNoticeImageSrc(notice.id));
       }
     }
     setShowForm(true);
@@ -230,17 +221,18 @@ const NoticeManager = () => {
                   )}
                 </div>
                 <p className="text-gray-600 mb-2">{notice.content}</p>
-                {notice.imageUrl && (
-                  isPdf(notice.imageUrl) ? (
+                {notice.hasImage && (
+                  notice.isPdf ? (
                     <div className="mt-3 flex items-center gap-2 bg-red-50 p-3 rounded-lg">
                       <FileText className="w-6 h-6 text-red-600" />
                       <span className="text-sm font-medium text-red-800">PDF Attachment</span>
                     </div>
                   ) : (
                     <img 
-                      src={getNoticeMediaUrl(notice.imageUrl)} 
+                      src={getNoticeImageSrc(notice.id)} 
                       alt={notice.title} 
                       className="mt-3 rounded-lg max-h-48 object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   )
                 )}

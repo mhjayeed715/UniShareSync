@@ -1,15 +1,63 @@
 const prisma = require('../config/prisma');
 const { notifyAll, NotificationTypes } = require('../utils/notificationHelper');
 
+// Helper: strip base64 imageUrl from notice, add hasImage/isPdf flags
+const stripImageData = (notice) => {
+  const { imageUrl, ...rest } = notice;
+  return {
+    ...rest,
+    hasImage: !!imageUrl,
+    isPdf: imageUrl
+      ? (imageUrl.startsWith('data:application/pdf') || imageUrl.endsWith('.pdf'))
+      : false
+  };
+};
+
+// Serve notice image as binary (public, no auth)
+exports.getNoticeImage = async (req, res) => {
+  try {
+    const notice = await prisma.notice.findUnique({
+      where: { id: req.params.id },
+      select: { imageUrl: true }
+    });
+
+    if (!notice || !notice.imageUrl) {
+      return res.status(404).json({ message: 'Image not found' });
+    }
+
+    // Base64 data URL -> serve as binary
+    if (notice.imageUrl.startsWith('data:')) {
+      const match = notice.imageUrl.match(/^data:([^;]+);base64,(.+)$/s);
+      if (match) {
+        const mimeType = match[1];
+        const buffer = Buffer.from(match[2], 'base64');
+        res.set('Content-Type', mimeType);
+        res.set('Content-Length', buffer.length);
+        res.set('Cache-Control', 'public, max-age=86400');
+        return res.send(buffer);
+      }
+    }
+
+    // Legacy file path — redirect
+    if (notice.imageUrl.startsWith('/uploads/')) {
+      return res.redirect(notice.imageUrl);
+    }
+
+    return res.status(404).json({ message: 'Image format not recognized' });
+  } catch (error) {
+    console.error('Get notice image error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // Get all public notices (for landing page)
 exports.getPublicNotices = async (req, res) => {
   try {
     console.log('Fetching public notices...');
     
-    // Test database connection first
     await prisma.$queryRaw`SELECT 1`;
     
-    const notices = await prisma.notice.findMany({
+    const rawNotices = await prisma.notice.findMany({
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: {
@@ -21,6 +69,8 @@ exports.getPublicNotices = async (req, res) => {
         }
       }
     });
+
+    const notices = rawNotices.map(stripImageData);
     console.log('Found notices:', notices.length);
     res.json({ notices });
   } catch (error) {
@@ -35,7 +85,7 @@ exports.getPublicNotices = async (req, res) => {
 // Get all notices (authenticated)
 exports.getAllNotices = async (req, res) => {
   try {
-    const notices = await prisma.notice.findMany({
+    const rawNotices = await prisma.notice.findMany({
       orderBy: { createdAt: 'desc' },
       include: {
         author: {
@@ -47,6 +97,7 @@ exports.getAllNotices = async (req, res) => {
       }
     });
 
+    const notices = rawNotices.map(stripImageData);
     res.json({ notices });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -100,7 +151,7 @@ exports.createNotice = async (req, res) => {
       notifType
     );
 
-    res.status(201).json({ message: 'Notice created successfully', notice });
+    res.status(201).json({ message: 'Notice created successfully', notice: stripImageData(notice) });
   } catch (error) {
     console.error('Create notice error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -139,7 +190,7 @@ exports.updateNotice = async (req, res) => {
       }
     });
 
-    res.json({ message: 'Notice updated successfully', notice });
+    res.json({ message: 'Notice updated successfully', notice: stripImageData(notice) });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
