@@ -4,9 +4,16 @@ const path = require('path');
 const { notifyAdmins, createNotification, NotificationTypes } = require('../utils/notificationHelper');
 
 // Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../uploads/feedback');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const isVercel = process.env.VERCEL === '1';
+const uploadDir = isVercel
+  ? '/tmp/uploads/feedback'
+  : path.join(__dirname, '../uploads/feedback');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('Could not create feedback uploads dir:', err.message);
 }
 
 // Get all feedback (community view)

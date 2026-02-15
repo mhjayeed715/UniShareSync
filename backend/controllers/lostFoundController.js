@@ -4,9 +4,16 @@ const path = require('path');
 const { notifyAdmins, NotificationTypes } = require('../utils/notificationHelper');
 
 // Ensure upload directory exists
-const uploadDir = path.join(__dirname, '../uploads/lost-found');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const isVercel = process.env.VERCEL === '1';
+const uploadDir = isVercel
+  ? '/tmp/uploads/lost-found'
+  : path.join(__dirname, '../uploads/lost-found');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.warn('Could not create lost-found uploads dir:', err.message);
 }
 
 // Get all items (browse)

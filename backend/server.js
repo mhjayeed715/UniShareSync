@@ -85,8 +85,11 @@ app.post('/api/public-report', async (req, res) => {
 });
 
 // Serve static files from uploads directory with error handling
+const uploadsPath = process.env.VERCEL === '1' 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, 'uploads');
 app.use('/uploads', (req, res, next) => {
-  express.static(path.join(__dirname, 'uploads'))(req, res, (err) => {
+  express.static(uploadsPath)(req, res, (err) => {
     if (err) {
       console.error('Static file error:', err);
       return res.status(404).json({ message: 'File not found' });
