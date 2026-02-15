@@ -409,7 +409,7 @@ const LostFoundManagement = () => {
                   <img 
                     src={selectedItem.imageUrl.startsWith('data:') || selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
                     alt={selectedItem.title} 
-                    className="w-full max-w-md h-64 object-cover rounded-lg border"
+                    className="w-full max-h-[60vh] object-contain rounded-lg border bg-gray-50"
                   />
                 </div>
               )}

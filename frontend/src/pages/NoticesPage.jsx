@@ -45,10 +45,10 @@ const NoticesPage = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-dark">Campus Notices</h1>
-        <p className="text-brand-gray">Stay updated with the latest announcements</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-brand-dark">Campus Notices</h1>
+        <p className="text-brand-gray text-sm sm:text-base">Stay updated with the latest announcements</p>
       </div>
 
       {loading ? (
@@ -58,10 +58,10 @@ const NoticesPage = () => {
       ) : (
         <div className="space-y-4">
           {notices.map((notice) => (
-            <div key={notice.id} className="bg-white rounded-xl shadow-sm border p-6 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-bold text-brand-dark">{notice.title}</h3>
+            <div key={notice.id} className="bg-white rounded-xl shadow-sm border p-4 sm:p-6 hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-lg sm:text-xl font-bold text-brand-dark">{notice.title}</h3>
                   {notice.priority === 'HIGH' && (
                     <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
                       <AlertCircle size={14} /> Important
@@ -124,11 +124,11 @@ const NoticesPage = () => {
 
       {/* Full Preview Modal */}
       {previewNotice && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setPreviewNotice(null)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-white border-b p-6 flex items-center justify-between z-10">
-              <div>
-                <h2 className="text-2xl font-bold text-brand-dark">{previewNotice.title}</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setPreviewNotice(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b p-4 sm:p-6 flex items-start justify-between z-10 gap-3">
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-2xl font-bold text-brand-dark break-words">{previewNotice.title}</h2>
                 <p className="text-sm text-gray-500 mt-1">
                   Posted on {new Date(previewNotice.createdAt).toLocaleDateString('en-US', { 
                     year: 'numeric', 

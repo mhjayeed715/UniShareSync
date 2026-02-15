@@ -254,16 +254,16 @@ const LostFound = () => {
   const myReportsCount = items.filter(item => item.reportedBy === user.name).length;
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
-            <h2 className="text-3xl font-bold text-brand-blue">Lost & Found Portal</h2>
-            <p className="text-brand-gray mt-1">Report lost items or help others find their belongings</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-brand-blue">Lost & Found Portal</h2>
+            <p className="text-brand-gray mt-1 text-sm sm:text-base">Report lost items or help others find their belongings</p>
           </div>
           <button
             onClick={() => setShowReportModal(true)}
-            className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 self-start sm:self-auto whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             Report Item
@@ -271,7 +271,7 @@ const LostFound = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-lg shadow-sm border">
             <div className="flex items-center justify-between">
               <div>
@@ -536,7 +536,7 @@ const LostFound = () => {
                   <img 
                     src={selectedItem.imageUrl.startsWith('data:') || selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
                     alt={selectedItem.title} 
-                    className="w-full max-w-md h-64 object-cover rounded-lg border"
+                    className="w-full max-h-[60vh] object-contain rounded-lg border bg-gray-50"
                   />
                 </div>
               )}

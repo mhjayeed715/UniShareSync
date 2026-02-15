@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle, Bell, X, Mail, Phone, Linkedin, GraduationCap, Briefcase, HelpCircle, FileText, ChevronRight, Star, Zap, Globe, Lock, Search, Upload, ClipboardList, MapPin } from 'lucide-react';
+import { BookOpen, Users, Calendar, MessageSquare, ArrowRight, Shield, CheckCircle, Bell, X, Mail, Phone, Linkedin, GraduationCap, Briefcase, HelpCircle, FileText, ChevronRight, Star, Zap, Globe, Lock, Search, Upload, ClipboardList, MapPin, Menu } from 'lucide-react';
 import { Hero } from '../components/ui/animated-hero';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -32,6 +32,7 @@ const LandingPage = ({ onNavigate }) => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeModal, setActiveModal] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchNotices();
@@ -78,7 +79,7 @@ const LandingPage = ({ onNavigate }) => {
               <button onClick={() => openModal('contact')} className="hover:text-brand-teal transition-colors">Contact</button>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-4">
               <button 
                 onClick={() => onNavigate('login')}
                 className="text-gray-700 font-semibold hover:text-brand-teal transition-colors px-4 py-2"
@@ -92,7 +93,39 @@ const LandingPage = ({ onNavigate }) => {
                 Get Started
               </button>
             </div>
+
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
+
+          {/* Mobile menu dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200 py-4 space-y-3">
+              <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">Features</a>
+              <a href="#roles" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">For You</a>
+              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">How it works</a>
+              <button onClick={() => { openModal('contact'); setMobileMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 rounded-lg">Contact</button>
+              <div className="flex gap-3 px-4 pt-2 border-t border-gray-200">
+                <button 
+                  onClick={() => onNavigate('login')}
+                  className="flex-1 text-center text-gray-700 font-semibold border border-gray-300 px-4 py-2.5 rounded-lg hover:bg-gray-50"
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={() => onNavigate('signup')}
+                  className="flex-1 text-center bg-brand-teal text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-teal-600"
+                >
+                  Get Started
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -151,9 +184,10 @@ const LandingPage = ({ onNavigate }) => {
                         <p className="text-gray-600 mb-3">{notice.content}</p>
                         {notice.imageUrl && (
                           <img 
-                            src={`${API_URL}${notice.imageUrl}`} 
+                            src={notice.imageUrl.startsWith('data:') || notice.imageUrl.startsWith('http') ? notice.imageUrl : `${API_URL}${notice.imageUrl}`} 
                             alt={notice.title} 
                             className="rounded-lg max-h-48 object-cover mb-3"
+                            onError={(e) => { e.target.style.display = 'none'; }}
                           />
                         )}
                         <div className="flex items-center gap-4 text-sm text-gray-500">

@@ -16,7 +16,8 @@ import api from '../api';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const AppLayout = ({ onLogout }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [showSettings, setShowSettings] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -253,61 +254,76 @@ const AppLayout = ({ onLogout }) => {
   return (
     <div className="min-h-screen bg-brand-light flex font-sans">
       
+      {/* Mobile Sidebar Overlay */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className={`bg-brand-blue text-white transition-all duration-300 shadow-2xl ${
-        sidebarOpen ? 'w-64' : 'w-20'
-      }`}>
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        bg-brand-blue text-white transition-all duration-300 shadow-2xl
+        ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        ${sidebarOpen ? 'w-64' : 'w-64 lg:w-20'}
+      `}>
         <div className="h-full flex flex-col">
           <div className="h-16 flex items-center justify-between px-6 border-b border-blue-800">
-            {sidebarOpen && (
+            {(sidebarOpen || mobileSidebarOpen) && (
               <div className="flex items-center gap-3">
                 <img src="/unisharesync.png" alt="UniShareSync Logo" className="w-8 h-8 rounded-lg" />
                 <span className="text-xl font-bold tracking-tight">UniShareSync</span>
               </div>
             )}
             <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => {
+                if (window.innerWidth < 1024) {
+                  setMobileSidebarOpen(false);
+                } else {
+                  setSidebarOpen(!sidebarOpen);
+                }
+              }}
               className="p-2 hover:bg-blue-800 rounded-lg transition-colors"
             >
-              <Menu className="w-5 h-5" />
+              {mobileSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
 
           <div className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
-            {sidebarOpen && <div className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-4 px-2">Menu</div>}
+            {(sidebarOpen || mobileSidebarOpen) && <div className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-4 px-2">Menu</div>}
             {menuItems.map((item, index) => (
               <button 
                 key={index}
                 onClick={() => {
                   setActiveTab(item.label);
                   setShowSettings(false);
+                  setMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg transition-all ${
+                className={`w-full flex items-center ${(sidebarOpen || mobileSidebarOpen) ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg transition-all ${
                   activeTab === item.label && !showSettings
                     ? 'bg-brand-teal text-white shadow-md' 
                     : 'text-blue-100 hover:bg-blue-800'
                 }`}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                {sidebarOpen && <span className="font-medium">{item.label}</span>}
+                {(sidebarOpen || mobileSidebarOpen) && <span className="font-medium">{item.label}</span>}
               </button>
             ))}
           </div>
 
           <div className="p-4 border-t border-blue-800">
             <button 
-              onClick={() => { setShowSettings(true); setActiveTab('Dashboard'); }}
-              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-blue-800 transition-colors mb-2`}
+              onClick={() => { setShowSettings(true); setActiveTab('Dashboard'); setMobileSidebarOpen(false); }}
+              className={`w-full flex items-center ${(sidebarOpen || mobileSidebarOpen) ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-blue-800 transition-colors mb-2`}
             >
               <Settings className="w-5 h-5" />
-              {sidebarOpen && <span>Settings</span>}
+              {(sidebarOpen || mobileSidebarOpen) && <span>Settings</span>}
             </button>
             <button 
               onClick={() => setShowLogoutConfirm(true)}
-              className={`w-full flex items-center ${sidebarOpen ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-red-500/10 hover:text-red-400 transition-colors`}
+              className={`w-full flex items-center ${(sidebarOpen || mobileSidebarOpen) ? 'gap-3 px-4' : 'justify-center px-2'} py-3 rounded-lg text-blue-100 hover:bg-red-500/10 hover:text-red-400 transition-colors`}
             >
               <LogOut className="w-5 h-5" />
-              {sidebarOpen && <span>Logout</span>}
+              {(sidebarOpen || mobileSidebarOpen) && <span>Logout</span>}
             </button>
           </div>
         </div>
@@ -318,14 +334,22 @@ const AppLayout = ({ onLogout }) => {
         
         {/* Top Navbar */}
         <header className="h-16 bg-white shadow-sm flex items-center justify-between px-4 lg:px-8 z-10 flex-shrink-0">
-          {/* Search Bar */}
-          <div className="flex flex-1 max-w-lg mx-8 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input 
-              type="text" 
-              placeholder="Search resources, projects, or events..." 
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-brand-teal/50 outline-none text-sm"
-            />
+          {/* Mobile menu button + Search Bar */}
+          <div className="flex items-center flex-1 gap-2">
+            <button
+              onClick={() => setMobileSidebarOpen(true)}
+              className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="hidden sm:flex flex-1 max-w-lg relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input 
+                type="text" 
+                placeholder="Search resources, projects, or events..." 
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-lg focus:ring-2 focus:ring-brand-teal/50 outline-none text-sm"
+              />
+            </div>
           </div>
 
           <div className="flex items-center space-x-4">
@@ -369,7 +393,7 @@ const AppLayout = ({ onLogout }) => {
       {/* Notifications Panel */}
       {showNotifications && (
         <div className="fixed inset-0 z-50" onClick={() => setShowNotifications(false)}>
-          <div className="absolute right-4 top-20 w-96 bg-white rounded-xl shadow-2xl border max-h-[600px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute right-2 sm:right-4 top-16 sm:top-20 w-[calc(100vw-1rem)] sm:w-96 bg-white rounded-xl shadow-2xl border max-h-[600px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-brand-blue to-brand-teal text-white">
               <h3 className="font-bold text-lg">Notifications</h3>
               <div className="flex gap-2">
