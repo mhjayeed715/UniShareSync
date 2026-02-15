@@ -144,7 +144,16 @@ exports.createItem = async (req, res) => {
   try {
     const { title, description, type, category, location, contactInfo } = req.body;
     const userId = req.user.id;
-    const imageUrl = req.file ? `/uploads/lost-found/${req.file.filename}` : null;
+    
+    // Convert uploaded image to base64 data URL
+    let imageUrl = null;
+    if (req.file) {
+      const base64 = req.file.buffer
+        ? req.file.buffer.toString('base64')
+        : require('fs').readFileSync(req.file.path, { encoding: 'base64' });
+      const mimeType = req.file.mimetype || 'image/jpeg';
+      imageUrl = `data:${mimeType};base64,${base64}`;
+    }
 
     const item = await prisma.lostFoundItem.create({
       data: {
@@ -228,7 +237,15 @@ exports.updateItem = async (req, res) => {
       return res.status(403).json({ message: 'You can only update your own items' });
     }
 
-    const imageUrl = req.file ? `/uploads/lost-found/${req.file.filename}` : item.imageUrl;
+    // Convert uploaded image to base64 data URL if new file
+    let imageUrl = item.imageUrl; // keep existing
+    if (req.file) {
+      const base64 = req.file.buffer
+        ? req.file.buffer.toString('base64')
+        : require('fs').readFileSync(req.file.path, { encoding: 'base64' });
+      const mimeType = req.file.mimetype || 'image/jpeg';
+      imageUrl = `data:${mimeType};base64,${base64}`;
+    }
 
     const updatedItem = await prisma.lostFoundItem.update({
       where: { id },
@@ -394,13 +411,7 @@ exports.deleteItem = async (req, res) => {
       return res.status(403).json({ message: 'You can only delete your own items' });
     }
 
-    // Delete associated image file if exists
-    if (item.imageUrl) {
-      const imagePath = path.join(__dirname, '..', item.imageUrl);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-      }
-    }
+    // Image is stored as base64 in DB, no file to delete
 
     await prisma.lostFoundItem.delete({
       where: { id }

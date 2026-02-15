@@ -407,7 +407,7 @@ const LostFoundManagement = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Image</h3>
                   <img 
-                    src={selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
+                    src={selectedItem.imageUrl.startsWith('data:') || selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
                     alt={selectedItem.title} 
                     className="w-full max-w-md h-64 object-cover rounded-lg border"
                   />

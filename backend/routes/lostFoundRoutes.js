@@ -14,16 +14,31 @@ const {
 const { protect } = require('../middleware/authMiddleware');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/lost-found/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+const isVercel = process.env.VERCEL === '1';
+const uploadsDir = isVercel
+  ? '/tmp/uploads/lost-found'
+  : path.join(__dirname, '../uploads/lost-found');
+
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
-});
+} catch (err) {
+  console.warn('Could not create lost-found uploads dir:', err.message);
+}
+
+const storage = isVercel
+  ? multer.memoryStorage()
+  : multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+      },
+      filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + Math.round(Math.random() * 1E9) + path.extname(file.originalname));
+      }
+    });
 
 const upload = multer({ 
   storage: storage,

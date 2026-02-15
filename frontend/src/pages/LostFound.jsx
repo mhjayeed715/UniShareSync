@@ -403,7 +403,7 @@ const LostFound = () => {
                     {item.imageUrl && (
                       <div className="mb-4">
                         <img 
-                          src={item.imageUrl.startsWith('blob:') ? item.imageUrl : `${API_URL}${item.imageUrl}`} 
+                          src={item.imageUrl.startsWith('data:') || item.imageUrl.startsWith('blob:') ? item.imageUrl : `${API_URL}${item.imageUrl}`} 
                           alt={item.title} 
                           className="w-full h-48 object-contain rounded-lg border bg-gray-50"
                         />
@@ -534,7 +534,7 @@ const LostFound = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Image</h3>
                   <img 
-                    src={selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
+                    src={selectedItem.imageUrl.startsWith('data:') || selectedItem.imageUrl.startsWith('blob:') ? selectedItem.imageUrl : `${API_URL}${selectedItem.imageUrl}`} 
                     alt={selectedItem.title} 
                     className="w-full max-w-md h-64 object-cover rounded-lg border"
                   />

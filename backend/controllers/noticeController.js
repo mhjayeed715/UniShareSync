@@ -64,7 +64,15 @@ exports.createNotice = async (req, res) => {
       return res.status(403).json({ message: 'Only admins can create notices' });
     }
 
-    const imageUrl = req.file ? `/uploads/notices/${req.file.filename}` : null;
+    // Convert uploaded file to base64 data URL
+    let imageUrl = null;
+    if (req.file) {
+      const base64 = req.file.buffer
+        ? req.file.buffer.toString('base64')
+        : require('fs').readFileSync(req.file.path, { encoding: 'base64' });
+      const mimeType = req.file.mimetype || 'application/octet-stream';
+      imageUrl = `data:${mimeType};base64,${base64}`;
+    }
 
     const notice = await prisma.notice.create({
       data: {
@@ -111,7 +119,11 @@ exports.updateNotice = async (req, res) => {
 
     const updateData = { title, content, priority };
     if (req.file) {
-      updateData.imageUrl = `/uploads/notices/${req.file.filename}`;
+      const base64 = req.file.buffer
+        ? req.file.buffer.toString('base64')
+        : require('fs').readFileSync(req.file.path, { encoding: 'base64' });
+      const mimeType = req.file.mimetype || 'application/octet-stream';
+      updateData.imageUrl = `data:${mimeType};base64,${base64}`;
     }
 
     const notice = await prisma.notice.update({

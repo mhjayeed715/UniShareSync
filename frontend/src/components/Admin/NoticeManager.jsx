@@ -4,6 +4,17 @@ import { useApi } from '../../hooks/useApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const getNoticeMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${API_URL}${url}`;
+};
+
+const isPdf = (url) => {
+  if (!url) return false;
+  return url.startsWith('data:application/pdf') || url.endsWith('.pdf');
+};
+
 const NoticeManager = () => {
   const [notices, setNotices] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -88,10 +99,10 @@ const NoticeManager = () => {
       priority: notice.priority
     });
     if (notice.imageUrl) {
-      if (notice.imageUrl.endsWith('.pdf')) {
+      if (isPdf(notice.imageUrl)) {
         setImagePreview('pdf');
       } else {
-        setImagePreview(`${API_URL}${notice.imageUrl}`);
+        setImagePreview(getNoticeMediaUrl(notice.imageUrl));
       }
     }
     setShowForm(true);
@@ -220,14 +231,14 @@ const NoticeManager = () => {
                 </div>
                 <p className="text-gray-600 mb-2">{notice.content}</p>
                 {notice.imageUrl && (
-                  notice.imageUrl.endsWith('.pdf') ? (
+                  isPdf(notice.imageUrl) ? (
                     <div className="mt-3 flex items-center gap-2 bg-red-50 p-3 rounded-lg">
                       <FileText className="w-6 h-6 text-red-600" />
                       <span className="text-sm font-medium text-red-800">PDF Attachment</span>
                     </div>
                   ) : (
                     <img 
-                      src={`${API_URL}${notice.imageUrl}`} 
+                      src={getNoticeMediaUrl(notice.imageUrl)} 
                       alt={notice.title} 
                       className="mt-3 rounded-lg max-h-48 object-cover"
                     />

@@ -4,6 +4,17 @@ import api from '../api';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const getNoticeMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('data:') || url.startsWith('http')) return url;
+  return `${API_URL}${url}`;
+};
+
+const isPdf = (url) => {
+  if (!url) return false;
+  return url.startsWith('data:application/pdf') || url.endsWith('.pdf');
+};
+
 const NoticesPage = () => {
   const [notices, setNotices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +77,7 @@ const NoticesPage = () => {
               
               {notice.imageUrl && (
                 <div className="mt-4 relative group">
-                  {notice.imageUrl.endsWith('.pdf') ? (
+                  {isPdf(notice.imageUrl) ? (
                     <div 
                       className="bg-red-50 border-2 border-red-200 rounded-lg p-6 flex items-center gap-4 cursor-pointer hover:bg-red-100 transition-colors"
                       onClick={() => setPreviewNotice(notice)}
@@ -81,7 +92,7 @@ const NoticesPage = () => {
                   ) : (
                     <>
                       <img 
-                        src={`${API_URL}${notice.imageUrl}`} 
+                        src={getNoticeMediaUrl(notice.imageUrl)} 
                         alt={notice.title} 
                         className="rounded-lg max-h-64 object-cover cursor-pointer"
                         onClick={() => setPreviewNotice(notice)}
@@ -152,15 +163,15 @@ const NoticesPage = () => {
               
               {previewNotice.imageUrl && (
                 <div className="mt-6">
-                  {previewNotice.imageUrl.endsWith('.pdf') ? (
+                  {isPdf(previewNotice.imageUrl) ? (
                     <iframe
-                      src={`${API_URL}${previewNotice.imageUrl}`}
+                      src={getNoticeMediaUrl(previewNotice.imageUrl)}
                       className="w-full h-[600px] rounded-lg border-2 border-gray-200"
                       title={previewNotice.title}
                     />
                   ) : (
                     <img 
-                      src={`${API_URL}${previewNotice.imageUrl}`} 
+                      src={getNoticeMediaUrl(previewNotice.imageUrl)} 
                       alt={previewNotice.title} 
                       className="w-full rounded-lg shadow-lg"
                       onError={(e) => { e.target.style.display = 'none'; }}
