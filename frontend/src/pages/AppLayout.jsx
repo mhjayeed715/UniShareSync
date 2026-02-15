@@ -10,6 +10,7 @@ import RoutineViewer from './RoutineViewer';
 import Projects from './Projects';
 import LostFound from './LostFound';
 import Feedback from './Feedback';
+import NoticesPage from './NoticesPage';
 import ChatBot from '../components/ChatBot';
 import api from '../api';
 
@@ -130,6 +131,7 @@ const AppLayout = ({ onLogout }) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: 'Dashboard' },
+    { icon: Bell, label: 'Notices' },
     { icon: BookOpen, label: 'Course Resources' },
     { icon: Users, label: 'Clubs & Events' },
     { icon: FolderKanban, label: 'Projects' },
@@ -215,6 +217,8 @@ const AppLayout = ({ onLogout }) => {
     switch (activeTab) {
       case 'Dashboard':
         return <Dashboard />;
+      case 'Notices':
+        return <NoticesPage />;
       case 'Course Resources':
         return <CourseResourcesPage />;
       case 'Clubs & Events':

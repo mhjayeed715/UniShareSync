@@ -6,6 +6,8 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const getNoticeImageSrc = (noticeId) => `${API_URL}/api/notices/${noticeId}/image`;
+
 const Dashboard = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [stats, setStats] = useState(null);
@@ -156,9 +158,9 @@ const Dashboard = () => {
                         )}
                       </div>
                       <p className="text-brand-gray mb-3 line-clamp-2">{notice.content}</p>
-                      {notice.imageUrl && (
+                      {notice.hasImage && (
                         <div className="relative mb-3">
-                          {notice.imageUrl.endsWith('.pdf') ? (
+                          {notice.isPdf ? (
                             <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
                               <FileText className="w-8 h-8 text-red-600 flex-shrink-0" />
                               <div className="flex-1">
@@ -170,9 +172,10 @@ const Dashboard = () => {
                           ) : (
                             <>
                               <img 
-                                src={`${API_URL}${notice.imageUrl}`} 
+                                src={getNoticeImageSrc(notice.id)} 
                                 alt={notice.title} 
                                 className="rounded-lg max-h-48 object-cover w-full"
+                                onError={(e) => { e.target.style.display = 'none'; }}
                               />
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg flex items-center justify-center">
                                 <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -268,19 +271,20 @@ const Dashboard = () => {
                 </p>
               </div>
               
-              {previewNotice.imageUrl && (
+              {previewNotice.hasImage && (
                 <div className="mt-6">
-                  {previewNotice.imageUrl.endsWith('.pdf') ? (
+                  {previewNotice.isPdf ? (
                     <iframe
-                      src={`${API_URL}${previewNotice.imageUrl}`}
+                      src={getNoticeImageSrc(previewNotice.id)}
                       className="w-full h-[600px] rounded-lg border-2 border-gray-200"
                       title={previewNotice.title}
                     />
                   ) : (
                     <img 
-                      src={`${API_URL}${previewNotice.imageUrl}`} 
+                      src={getNoticeImageSrc(previewNotice.id)} 
                       alt={previewNotice.title} 
                       className="w-full rounded-lg shadow-lg"
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   )}
                 </div>
