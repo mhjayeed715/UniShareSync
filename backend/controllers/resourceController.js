@@ -5,36 +5,31 @@ const { getCoursesBySemester, matchCourseCode, getSemesterFromCourse } = require
 const { createNotification } = require('./notificationController');
 const { notifyStudents, notifyAdmins, NotificationTypes } = require('../utils/notificationHelper');
 
-// Upload a new resource
+// Upload a new resource (link-based — user provides Google Drive/OneDrive link)
 exports.uploadResource = async (req, res) => {
   try {
     console.log('Upload request received');
     console.log('Body:', req.body);
-    console.log('File:', req.file);
     
-    const { title, description, courseName, type, semester } = req.body;
+    const { title, description, courseName, type, semester, fileUrl, fileName } = req.body;
     const userId = req.user.id;
 
-    if (!req.file) {
-      console.log('No file in request');
+    if (!fileUrl) {
       return res.status(400).json({ 
         success: false, 
-        message: 'No file uploaded' 
+        message: 'Please provide a file link (Google Drive, OneDrive, etc.)' 
       });
     }
 
-    // Create file URL
-    const fileUrl = `/uploads/resources/${req.file.filename}`;
-    
-    console.log('Creating resource with:', {
-      title,
-      courseName,
-      semester: parseInt(semester) || 8,
-      filePath: fileUrl,
-      fileName: req.file.originalname,
-      resourceType: type || 'notes',
-      uploadedBy: userId
-    });
+    // Validate URL
+    try {
+      new URL(fileUrl);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid URL'
+      });
+    }
 
     const resource = await prisma.resource.create({
       data: {
@@ -43,9 +38,9 @@ exports.uploadResource = async (req, res) => {
         courseName: courseName || '',
         semester: parseInt(semester) || 8,
         filePath: fileUrl,
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
-        fileType: req.file.mimetype,
+        fileName: fileName || title,
+        fileSize: null,
+        fileType: 'link',
         resourceType: type || 'notes',
         uploadedBy: userId,
         isApproved: req.user.role === 'ADMIN' || req.user.role === 'FACULTY'
@@ -87,14 +82,6 @@ exports.uploadResource = async (req, res) => {
       data: resource
     });
   } catch (error) {
-    // Delete uploaded file if database operation fails
-    if (req.file) {
-      const filePath = path.join(__dirname, '../uploads/resources', req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-    
     console.error('Upload resource error:', error);
     console.error('Error stack:', error.stack);
     res.status(500).json({ 
@@ -381,10 +368,12 @@ exports.deleteResource = async (req, res) => {
       });
     }
 
-    // Delete file from filesystem
-    const filePath = path.join(__dirname, '..', resource.fileUrl);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Delete file from filesystem (only for legacy local files)
+    if (resource.filePath && !resource.filePath.startsWith('http')) {
+      const filePath = path.join(__dirname, '..', resource.filePath);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
     }
 
     await prisma.resource.delete({
@@ -405,7 +394,7 @@ exports.deleteResource = async (req, res) => {
   }
 };
 
-// Download resource
+// Download resource (redirect to external link)
 exports.downloadResource = async (req, res) => {
   try {
     const { id } = req.params;
@@ -421,6 +410,22 @@ exports.downloadResource = async (req, res) => {
       });
     }
 
+    // Increment download count
+    await prisma.resource.update({
+      where: { id },
+      data: { downloads: { increment: 1 } }
+    });
+
+    // If filePath is an external URL, redirect to it
+    if (resource.filePath.startsWith('http')) {
+      return res.json({ 
+        success: true, 
+        redirectUrl: resource.filePath,
+        fileName: resource.fileName 
+      });
+    }
+
+    // Legacy: local file download
     const filePath = path.join(__dirname, '..', resource.filePath);
     
     if (!fs.existsSync(filePath)) {
@@ -429,12 +434,6 @@ exports.downloadResource = async (req, res) => {
         message: 'File not found on server' 
       });
     }
-
-    // Increment download count
-    await prisma.resource.update({
-      where: { id },
-      data: { downloads: { increment: 1 } }
-    });
 
     res.download(filePath, resource.fileName);
   } catch (error) {

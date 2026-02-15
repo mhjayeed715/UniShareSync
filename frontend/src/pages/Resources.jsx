@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, Search, X, FileText, Download, Eye, Calendar, User, BookOpen } from 'lucide-react';
+import { Upload, Search, X, FileText, Download, Eye, Calendar, User, BookOpen, Link, ExternalLink } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -18,7 +18,8 @@ const Resources = () => {
     courseName: '',
     semester: 8,
     type: 'notes',
-    file: null
+    fileUrl: '',
+    fileName: ''
   });
 
   useEffect(() => {
@@ -70,37 +71,38 @@ const Resources = () => {
     setFilteredResources(filtered);
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setUploadData({ ...uploadData, file });
-    }
-  };
-
   const handleUploadResource = async (e) => {
     e.preventDefault();
     
-    if (!uploadData.file) {
-      alert('Please select a file to upload');
+    if (!uploadData.fileUrl) {
+      alert('Please provide a file link (Google Drive, OneDrive, etc.)');
+      return;
+    }
+
+    try {
+      new URL(uploadData.fileUrl);
+    } catch {
+      alert('Please provide a valid URL');
       return;
     }
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('file', uploadData.file);
-      formData.append('title', uploadData.title);
-      formData.append('description', uploadData.description);
-      formData.append('courseName', uploadData.courseName);
-      formData.append('semester', uploadData.semester);
-      formData.append('type', uploadData.type);
-
       const response = await fetch(`${API_URL}/api/resources/upload`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         },
-        body: formData
+        body: JSON.stringify({
+          title: uploadData.title,
+          description: uploadData.description,
+          courseName: uploadData.courseName,
+          semester: uploadData.semester,
+          type: uploadData.type,
+          fileUrl: uploadData.fileUrl,
+          fileName: uploadData.fileName || uploadData.title
+        })
       });
 
       const data = await response.json();
@@ -114,7 +116,8 @@ const Resources = () => {
           courseName: '',
           semester: 8,
           type: 'notes',
-          file: null
+          fileUrl: '',
+          fileName: ''
         });
         fetchResources();
       } else {
@@ -135,7 +138,13 @@ const Resources = () => {
         }
       });
       
-      if (response.ok) {
+      const data = await response.json();
+      
+      if (data.success && data.redirectUrl) {
+        // External link — open in new tab
+        window.open(data.redirectUrl, '_blank');
+      } else if (response.ok) {
+        // Legacy file download
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -165,7 +174,11 @@ const Resources = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data.filePath) {
-          window.open(`${API_URL}${data.data.filePath}`, '_blank');
+          if (data.data.filePath.startsWith('http')) {
+            window.open(data.data.filePath, '_blank');
+          } else {
+            window.open(`${API_URL}${data.data.filePath}`, '_blank');
+          }
         }
       }
     } catch (error) {
@@ -283,8 +296,8 @@ const Resources = () => {
                       onClick={() => handleDownload(resource.id, resource.fileName)}
                       className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-brand-teal text-white rounded text-sm hover:bg-teal-600"
                     >
-                      <Download className="w-4 h-4" />
-                      Download
+                      <ExternalLink className="w-4 h-4" />
+                      Open Resource
                     </button>
                     <button
                       onClick={() => handleView(resource.id)}
@@ -373,29 +386,38 @@ const Resources = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">File * (Max 10MB)</label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-brand-teal transition-colors">
-                    <div className="space-y-1 text-center">
-                      <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-brand-teal hover:text-teal-600">
-                          <span>Upload a file</span>
-                          <input
-                            type="file"
-                            onChange={handleFileChange}
-                            className="sr-only"
-                            required
-                          />
-                        </label>
-                      </div>
-                      <p className="text-xs text-gray-500">PDF, DOC, XLS, PPT, Images</p>
-                      {uploadData.file && (
-                        <p className="text-sm text-green-600 font-medium">
-                          Selected: {uploadData.file.name}
-                        </p>
-                      )}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">File Link * (Google Drive, OneDrive, etc.)</label>
+                  <div className="space-y-2">
+                    <div className="relative">
+                      <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <input
+                        type="url"
+                        value={uploadData.fileUrl}
+                        onChange={(e) => setUploadData({ ...uploadData, fileUrl: e.target.value })}
+                        placeholder="https://drive.google.com/file/d/..."
+                        className="w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-teal"
+                        required
+                      />
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-xs text-blue-700 font-medium mb-1">How to share:</p>
+                      <ol className="text-xs text-blue-600 space-y-1 list-decimal list-inside">
+                        <li>Upload your file to Google Drive or OneDrive</li>
+                        <li>Right-click → Share → "Anyone with the link"</li>
+                        <li>Copy the link and paste it above</li>
+                      </ol>
                     </div>
                   </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">File Name (optional)</label>
+                  <input
+                    type="text"
+                    value={uploadData.fileName}
+                    onChange={(e) => setUploadData({ ...uploadData, fileName: e.target.value })}
+                    placeholder="e.g., Chapter1-Notes.pdf"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-brand-teal"
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">

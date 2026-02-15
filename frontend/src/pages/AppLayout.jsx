@@ -27,7 +27,12 @@ const AppLayout = ({ onLogout }) => {
   const [profileData, setProfileData] = useState({ name: '' });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [profilePicture, setProfilePicture] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `${API_URL}${user.profilePicture}` : null);
+  const getProfileUrl = (pic) => {
+    if (!pic) return null;
+    if (pic.startsWith('data:') || pic.startsWith('http')) return pic;
+    return `${API_URL}${pic}`;
+  };
+  const [profilePreview, setProfilePreview] = useState(getProfileUrl(user.profilePicture));
 
   useEffect(() => {
     setProfileData({ name: user.name });
@@ -149,7 +154,7 @@ const AppLayout = ({ onLogout }) => {
                     {profilePreview ? (
                       <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
                     ) : user.profilePicture ? (
-                      <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                      <img src={getProfileUrl(user.profilePicture)} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
                       user.name?.charAt(0) || 'U'
                     )}
@@ -341,7 +346,7 @@ const AppLayout = ({ onLogout }) => {
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setShowSettings(true)}>
               <div className="w-9 h-9 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-sm overflow-hidden">
                 {user.profilePicture ? (
-                  <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={getProfileUrl(user.profilePicture)} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   user.name?.charAt(0) || 'U'
                 )}

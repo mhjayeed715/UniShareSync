@@ -10,8 +10,14 @@ exports.updateProfile = async (req, res) => {
     const updateData = {};
     if (name) updateData.name = name;
     if (department && req.user.role === 'ADMIN') updateData.department = department;
+    
+    // Convert uploaded image to base64 data URL and store in DB
     if (req.file) {
-      updateData.profilePicture = '/uploads/profiles/' + req.file.filename;
+      const base64 = req.file.buffer 
+        ? req.file.buffer.toString('base64') 
+        : require('fs').readFileSync(req.file.path, { encoding: 'base64' });
+      const mimeType = req.file.mimetype || 'image/jpeg';
+      updateData.profilePicture = `data:${mimeType};base64,${base64}`;
     }
 
     const user = await prisma.user.update({

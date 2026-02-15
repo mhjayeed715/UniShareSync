@@ -30,7 +30,12 @@ const AdminDashboard = () => {
   const [profileData, setProfileData] = useState({ name: user.name, department: user.department });
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [profilePicture, setProfilePicture] = useState(null);
-  const [profilePreview, setProfilePreview] = useState(user.profilePicture ? `${API_URL}${user.profilePicture}` : null);
+  const getProfileUrl = (pic) => {
+    if (!pic) return null;
+    if (pic.startsWith('data:') || pic.startsWith('http')) return pic;
+    return `${API_URL}${pic}`;
+  };
+  const [profilePreview, setProfilePreview] = useState(getProfileUrl(user.profilePicture));
 
   const handleUpdateProfile = async () => {
     try {
@@ -203,7 +208,7 @@ const AdminDashboard = () => {
                   {profilePreview ? (
                     <img src={profilePreview} alt="Profile" className="w-full h-full object-cover" />
                   ) : user.profilePicture ? (
-                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={getProfileUrl(user.profilePicture)} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name?.[0]
                   )}
@@ -400,7 +405,7 @@ const AdminDashboard = () => {
                 </div>
                 <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg overflow-hidden">
                   {user.profilePicture ? (
-                    <img src={user.profilePicture.startsWith('http') ? user.profilePicture : `${API_URL}${user.profilePicture}`} alt="Profile" className="w-full h-full object-cover" />
+                    <img src={getProfileUrl(user.profilePicture)} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
                     user.name?.[0]
                   )}
